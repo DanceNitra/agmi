@@ -1,0 +1,36 @@
+[project]
+name = "agmi"
+version = "0.5.0"
+description = "Agent Memory Integrity (agmi): a conformance test suite that measures whether AI agent memory and checkpoint stores notice tampering"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "Yasha Khandelwal", email = "yasha.khandelwal@tech4biz.io"}]
+maintainers = [{name = "Yasha Khandelwal", email = "yasha.khandelwal@tech4biz.io"}]
+requires-python = ">=3.10"
+keywords = ["ai-agents", "agent-memory", "integrity", "security", "langgraph", "letta", "mem0"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest"]
+langgraph = ["langgraph-checkpoint-sqlite"]
+letta = ["letta", "asyncpg", "psycopg2-binary", "pgvector", "pgserver"]
+mem0 = ["mem0ai", "qdrant-client"]
+
+[project.scripts]
+agmi = "agmi.runner:main"
+
+[project.urls]
+Homepage = "https://github.com/tech4biz-yasha/agmi"
+Issues = "https://github.com/tech4biz-yasha/agmi/issues"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
