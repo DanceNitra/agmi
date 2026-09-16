@@ -280,6 +280,8 @@ The adapter is `agmi/adapters/inspeximus_rows.py`; `pip install -e ".[inspeximus
 
 `openfang(model,fixed)` is a Python re-implementation of OpenFang's hash-chained audit log, including the tip persistence fix from [openfang PR #1287](https://github.com/RightNow-AI/openfang/pull/1287). It proves the five attacks are detectable by a chained store. It is not a measurement of the Rust binary.
 
+`openfang(model,fixed,tip)` is the same model with the threat model applied to the tip as well: `audit_chain_state.tip_hash` lives in the attacked SQLite file, so after a tail cut one UPDATE moves it to the new last row and the forward walk agrees with it. `truncate` is accepted; the other four stay detected because they break a link inside the surviving chain. A persisted tip closes truncation only while the attacker cannot write where the tip is kept, which is what an anchor held elsewhere is for (Crosby and Wallach 2009; RFC 9162 consistency proofs). Same shape as the inspeximus sidecar row.
+
 `naive-mem` is a deliberately undefended retriever. A "safe" from it is a weak signal and exists only so the memory-specific attacks have something to run against until real retrieval adapters land.
 
 ## Reading the scorecard honestly

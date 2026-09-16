@@ -180,3 +180,30 @@ class OpenFangAdapter(MemoryAdapter):
                 return False  # catches truncation
 
         return True
+
+
+class OpenFangTipHolderAdapter(OpenFangAdapter):
+    """The post-fix model under agmi's own threat model, taken literally: the attacker has write
+    access to the SQLite file, and `audit_chain_state.tip_hash` lives in that file. After a tail
+    cut, one UPDATE moves the persisted tip to the new last row and the forward walk agrees with it.
+    tamper, delete_middle, reorder and forge stay detected, because they break links inside the
+    surviving chain; truncate is accepted. The persisted tip closes truncation only while the
+    attacker cannot write where the tip is kept, which is what an external anchor or gossip is for
+    (Crosby and Wallach 2009; RFC 9162 consistency proofs against a previously advertised head).
+    This row is a model, like the one above; it is not a measurement of the Rust binary."""
+
+    name = "openfang(model,fixed,attacker rewrites tip)"
+
+    def __init__(self):
+        super().__init__(strict_tip=True)
+
+    def delete_raw(self, seq: int) -> None:
+        super().delete_raw(seq)
+        conn = self._connect()
+        try:
+            rows = conn.execute("SELECT hash FROM audit_entries ORDER BY seq ASC").fetchall()
+            if rows:
+                conn.execute("UPDATE audit_chain_state SET tip_hash = ? WHERE id = 1", (rows[-1][0],))
+                conn.commit()
+        finally:
+            conn.close()

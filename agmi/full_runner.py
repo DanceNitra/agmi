@@ -15,7 +15,7 @@ from __future__ import annotations
 
 
 def full_scorecard() -> str:
-    from agmi.adapters.openfang import OpenFangAdapter
+    from agmi.adapters.openfang import OpenFangAdapter, OpenFangTipHolderAdapter
     from agmi.adapters.langgraph_sqlite import LangGraphSqliteAdapter
     try:
         from agmi.adapters.mem0_at_rest import Mem0AtRestAdapter
@@ -47,6 +47,7 @@ def full_scorecard() -> str:
     # (label, at-rest adapter or None, semantic adapter or None)
     rows = [
         ("openfang(model,fixed)", OpenFangAdapter(strict_tip=True), None),
+        ("openfang(model,fixed,tip)", OpenFangTipHolderAdapter(), None),
         ("langgraph-sqlite", LangGraphSqliteAdapter(), None),
         *([letta_row] if letta_row else []),
         *([mem0_row] if mem0_row else []),
