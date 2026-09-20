@@ -48,7 +48,8 @@ which would score every attack "detected" for the wrong reason: a fail-closed ve
 detection. The receipts rows therefore seed with receipts on and a fresh key, and the clean-store
 check in `Attack.run` passes on the untouched store first.
 
-Measured on inspeximus 2.38.0, 2026-09-16.
+Measured on inspeximus 2.38.0, 2026-09-16, submitted by the inspeximus maintainer; reproduced
+independently by agmi on inspeximus 3.0.0 (macOS, Python 3.12), 2026-09-20.
 """
 
 
@@ -241,6 +242,10 @@ class InspeximusRowsSidecarAdapter(InspeximusRowsAdapter):
 
     name = "inspeximus-rows+sidecar"
     attacker_holds_sidecar = True
+    # verify() here is the store's audit call, not its read path: after any of the five attacks
+    # the store still loads and recall() serves the altered record. full_runner prints a detection
+    # on an audit call as "reported" and shows "audit" in the checkedAt column.
+    detection_point = "audit"
 
 
 class InspeximusRowsSidecarHeadAdapter(InspeximusRowsSidecarAdapter):
@@ -249,6 +254,7 @@ class InspeximusRowsSidecarHeadAdapter(InspeximusRowsSidecarAdapter):
 
     name = "inspeximus-rows+sidecar+head"
     attacker_holds_head = True
+    detection_point = "audit"
 
 
 class InspeximusDefaultAdapter(InspeximusRowsAdapter):

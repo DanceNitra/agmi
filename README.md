@@ -32,7 +32,7 @@ Three of the most used agent memory layers were seeded through their own APIs, e
 | inspeximus, receipts on with a key, attacker holds the store's directory | inspeximus 2.38.0 | reported | reported | reported | reported | reported |
 | inspeximus, receipts on with a key, attacker also holds the user's config home | inspeximus 2.38.0 | reported | accepted | reported | reported | reported |
 
-"Accepted" means the tool loaded the altered store, raised nothing, and the agent carried on from the altered memory as if it were true. "Reported" means the tool's own integrity check named the problem after a reload; the inspeximus rows say which call that is. Every row is a measurement of the real library at the version shown, reproducible in under a minute, and pinned by a test that fails the day that library adds a check.
+"Accepted" means the tool loaded the altered store, raised nothing, and the agent carried on from the altered memory as if it were true. "Reported" means the tool's own integrity check named the problem after a reload, and only that. After any of the five attacks the store still loads and the read path (`recall()` for inspeximus) answers from the altered store, so a reported cell says a separate audit call (`verify_writes()` in the inspeximus rows) caught it, not that the agent was protected at read time. `full_runner` names the detection point in a checkedAt column: "read" when verify() is the read path, "audit" when it is a call the operator has to make. This table has no such column; every reported cell in it is an audit detection. Every row is a measurement of the real library at the version shown, reproducible in under a minute, and pinned by a test that fails the day that library adds a check.
 
 This is a design gap, not a bug. LangGraph, Letta and Mem0 do not claim their stores are tamper evident. inspeximus makes that claim for its receipts mode, and the table shows what that buys and where it stops. The point of agmi is that nobody had measured the gap with one yardstick, and that the gap matters the moment agent memory is used as a record.
 
@@ -264,7 +264,7 @@ The memory-specific columns stay `n/a` for Mem0 because retrieval ranking under 
 
 | | |
 |---|---|
-| Measured on | inspeximus 2.38.0. Receipts rows: `Inspeximus(path, receipts=True, receipt_key=sk)` with a fresh Ed25519 key. Default row: `Inspeximus(path)` |
+| Measured on | inspeximus 2.38.0, submitted by the inspeximus maintainer; reproduced independently by agmi on inspeximus 3.0.0 (macOS, Python 3.12). Receipts rows: `Inspeximus(path, receipts=True, receipt_key=sk)` with a fresh Ed25519 key. Default row: `Inspeximus(path)` |
 | What is targeted | The `records` table of the SQLite store, one JSON document per memory, and `<store>.receipts.json`, the signed hash chain of write receipts, both in the store's directory. In the third row also the chain head the store keeps in the user's config home |
 | Seeded through | `remember(text, key=...)` |
 | Read back through | Receipts rows: `verify_writes(expected_pubkey=pk)`, the store's own audit method (also its `verify_writes` MCP tool). Default row: the store loads, `recall()` answers, `history()` answers |

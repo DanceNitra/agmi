@@ -25,7 +25,8 @@ from agmi.adapters.inspeximus_rows import (  # noqa: E402
     InspeximusDefaultAdapter, InspeximusRowsSidecarAdapter, InspeximusRowsSidecarHeadAdapter)
 from agmi.attacks.at_rest import ALL_AT_REST_ATTACKS  # noqa: E402
 
-MEASURED_ON = "inspeximus 2.38.0"
+MEASURED_ON = ("inspeximus 2.38.0, submitted by the inspeximus maintainer; reproduced independently "
+               "by agmi on inspeximus 3.0.0 (macOS, Python 3.12)")
 EXPECTED = {
     InspeximusDefaultAdapter: {"tamper": False, "truncate": False, "delete_middle": False,
                                "reorder": False, "forge": False},
