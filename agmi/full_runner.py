@@ -9,6 +9,13 @@ attacks (injection, bleed, hijack, indirect injection) apply only to tools
 that do user-scoped semantic retrieval. A tool that lacks one surface simply
 scores n/a there, which is itself informative: an audit log cannot be
 memory-injected; a bare vector store has no chain to truncate.
+
+The checkedAt column names the detection point an adapter measures: "read"
+means verify() is the tool's read path, the call that returns memories to the
+agent; "audit" means verify() is a separate integrity call the operator has to
+make, and the read path still serves the altered data. A detection on an audit
+call prints "reported" rather than "safe" so the two are never read as the
+same guarantee.
 """
 
 from __future__ import annotations
@@ -48,11 +55,17 @@ def full_scorecard() -> str:
     ]
 
     cells: dict[tuple[str, str], str] = {}
+    checked_at: dict[str, str] = {}
     for label, ar_ad, sm_ad in rows:
         if ar_ad is not None:
             ar_ad.name = label
+            point = getattr(ar_ad, "detection_point", "read")
+            checked_at[label] = point
             for atk in at_rest:
-                cells[(label, atk.name)] = atk.run(ar_ad).status
+                status = atk.run(ar_ad).status
+                if status == "safe" and point == "audit":
+                    status = "reported"
+                cells[(label, atk.name)] = status
         else:
             for atk in at_rest:
                 cells[(label, atk.name)] = "n/a"
@@ -70,7 +83,7 @@ def full_scorecard() -> str:
         "cross_session_bleed": "bleed", "retrieval_hijack": "hijack",
         "indirect_prompt_injection": "promptInj",
     }
-    cols = [short[n] for n in all_names]
+    cols = ["checkedAt"] + [short[n] for n in all_names]
     label_w = max(len(r[0]) for r in rows) + 1
     col_w = max(max(len(c) for c in cols), 10)
 
@@ -79,6 +92,7 @@ def full_scorecard() -> str:
     lines = [head, "-" * len(head)]
     for label, _, _ in rows:
         line = [label.ljust(label_w) + "|"]
+        line += [c(checked_at.get(label, "n/a"))]
         line += [c(cells[(label, n)]) for n in all_names]
         lines.append(" ".join(line[:1]) + " " + " | ".join(line[1:]))
     return "\n".join(lines)
