@@ -13,6 +13,8 @@ A conformance test suite that measures whether AI agent memory and checkpoint st
   <img src="https://img.shields.io/badge/real%20targets-3-green.svg" alt="targets">
 </p>
 
+[![Preprint DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22765627.svg)](https://doi.org/10.5281/zenodo.22765627)
+
 ---
 
 ## The result in one table
