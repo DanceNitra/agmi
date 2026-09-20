@@ -1,21 +1,25 @@
 cff-version: 1.2.0
-message: "If you use agmi, please cite it as below."
+message: "If you use agmi, please cite the paper below and the software record."
 title: "agmi: Agent Memory Integrity, a conformance test suite for tamper evidence in AI agent memory and checkpoint stores"
 authors:
   - family-names: Khandelwal
     given-names: Yasha
     email: yasha.khandelwal@tech4biz.io
-    name-particle: ""
-year: 2026
+    orcid: "https://orcid.org/0009-0005-2166-4951"
 version: 0.5.0
+date-released: 2026-09-14
 license: MIT
 repository-code: "https://github.com/tech4biz-yasha/agmi"
 url: "https://github.com/tech4biz-yasha/agmi"
 preferred-citation:
-  type: software
-  title: "agmi: Agent Memory Integrity"
+  type: article
+  title: "Tamper Evidence in AI Agent Memory Stores: A Conformance Suite and Three Measurements"
   authors:
-    - name: "Yasha Khandelwal"
+    - family-names: Khandelwal
+      given-names: Yasha
       email: yasha.khandelwal@tech4biz.io
+      orcid: "https://orcid.org/0009-0005-2166-4951"
   year: 2026
-  url: "https://github.com/tech4biz-yasha/agmi"
+  doi: 10.5281/zenodo.22765627
+  url: "https://ssrn.com/abstract=7461118"
+  notes: "Preprint. Also on SSRN, DOI 10.2139/ssrn.7461118."
