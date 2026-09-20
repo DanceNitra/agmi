@@ -8,6 +8,10 @@ authors:
     orcid: "https://orcid.org/0009-0005-2166-4951"
 version: 0.5.0
 date-released: 2026-09-14
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22860887
+    description: "Software record for v0.5.0"
 license: MIT
 repository-code: "https://github.com/tech4biz-yasha/agmi"
 url: "https://github.com/tech4biz-yasha/agmi"
