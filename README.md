@@ -15,6 +15,7 @@ A conformance test suite that measures whether AI agent memory and checkpoint st
 
 [![Preprint DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22765627.svg)](https://doi.org/10.5281/zenodo.22765627)
 [![SSRN](https://img.shields.io/badge/SSRN-7461118-blue)](https://ssrn.com/abstract=7461118)
+[![Software DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22860887.svg)](https://doi.org/10.5281/zenodo.22860887)
 
 ---
 
