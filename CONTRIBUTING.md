@@ -12,7 +12,7 @@ agmi is a scorecard. Its value is that every cell was produced the same way, so 
 
 ## Rows submitted by a tool's own maintainer
 
-Maintainers are welcome to submit their own tool. Those rows land only after agmi reproduces them independently, and the README marks them: "submitted by the <tool> maintainer, reproduced independently by agmi on <version>". Leave accepted cells as measured. If a claim in the README goes beyond what the row measured, it will be asked to come out.
+Maintainers are welcome to submit their own tool. Those rows land only after agmi reproduces them independently, and the README marks them: "submitted by the TOOL maintainer, reproduced independently by agmi on VERSION". Leave accepted cells as measured. If a claim in the README goes beyond what the row measured, it will be asked to come out.
 
 ## Models and reference rows
 
