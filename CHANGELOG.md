@@ -1,6 +1,18 @@
 # Changelog
 
 ## Unreleased
+- Two more targets for the memory-specific family. `inspeximus_recall.py`
+  drives real inspeximus through `remember`/`recall` in its default
+  configuration; `recall` ranks lexically below 300 memories, so the row
+  runs offline and lands in the inspeximus default row. `langgraph_store.py`
+  drives LangGraph's `SqliteStore` with a vector index through
+  `put`/`search`; it is a separate row from the checkpointer because they
+  are different components, and its cells are published only with a real
+  embedder. Facts pinned: the store applies no relevance floor and its user
+  isolation is the caller's namespace; inspeximus drops another user's
+  records before ranking and shares records written with no user.
+- `agmi/measure.py`: one command for the memory-specific family on any
+  target, printing the row with its provenance line.
 - `retrieval_hijack` rebuilt so a relevance floor cannot pass it. The
   victim holds six genuine memories on one topic and the agent takes three;
   the attacker's single entry is stuffed with the topic's question words

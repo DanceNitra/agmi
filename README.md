@@ -44,8 +44,10 @@ The second attack family never touches a file. It writes memories through the to
 | Target | Version | memory_injection | cross_session_bleed | retrieval_hijack | indirect_prompt_injection |
 |---|---|:-:|:-:|:-:|:-:|
 | Mem0 local Qdrant store, `infer=False`, all-MiniLM-L6-v2 | mem0ai 2.0.20 | surfaced | kept out | surfaced, rank 2 of 3 | surfaced |
+| inspeximus, default configuration, lexical `recall` | inspeximus 3.0.0 | surfaced | kept out | surfaced, rank 1 of 3 | surfaced |
+| LangGraph `SqliteStore`, vector index, all-MiniLM-L6-v2 | langgraph-checkpoint-sqlite 3.1.1 | surfaced | kept out | surfaced, rank 3 of 3 | surfaced |
 
-"Surfaced" means the attacker's memory came back from the read path as context for the agent. "Kept out" means it did not. The kept-out cell held because Mem0 filters retrieval on `user_id` inside Qdrant. The three surfaced cells have one cause: Mem0 ranks by cosine similarity and nothing else. It keeps no record of where a memory came from, does not inspect what it returns, and applies no check for stuffed or duplicated text, so a planted memory, an entry padded with a topic's question words, and an instruction disguised as a memory are each as trusted as a genuine one. In the hijack cell the real embedder did rank one genuine memory above the stuffed entry, which is why it landed at rank 2 rather than 1, but a slot was still taken from a memory that should have been served. Measured with a real sentence embedder, never with the offline stand-in; see the Mem0 section for the method and what is not measured.
+"Surfaced" means the attacker's memory came back from the read path as context for the agent. "Kept out" means it did not. The pattern is the same in every tool measured so far: the only cell that holds is user isolation, and it holds for a tool-specific reason (Mem0 filters on `user_id` inside Qdrant; inspeximus drops records written for another user before ranking; the LangGraph store searches only the namespace the caller names, so the guarantee is the caller's, not the store's). The three surfaced cells have one cause everywhere: the read path ranks by similarity and nothing else. No tool keeps a record of where a memory came from, inspects what it returns, or checks for stuffed or duplicated text, so a planted memory, an entry padded with a topic's question words, and an instruction disguised as a memory are each as trusted as a genuine one. Where the stuffed entry lands depends on the ranking: first under inspeximus's lexical overlap at relevance 1.0, second in Mem0 and third in the LangGraph store under the same sentence embedder. In every case it took a slot from a memory that should have been served. Rows that rank by an embedder are measured with a real sentence embedder, never with the offline stand-in; each target's section gives the method and what is not measured.
 
 ## Quick start
 
@@ -58,7 +60,7 @@ PYTHONPATH=. python3 agmi/full_runner.py 2>/dev/null | grep "|"
 
 Everything runs offline. No API keys, no model downloads, no Docker. The Letta row starts an embedded Postgres through `pgserver`; set `LETTA_PG_URI` if you would rather point it at your own.
 
-The memory-specific Mem0 cells are the one opt-in: they are measured with a real sentence embedder, so `pip install -e ".[embedder]"` adds sentence-transformers and the first run fetches all-MiniLM-L6-v2 (about 90 MB) into the local Hugging Face cache. Without it those cells print `n/a` rather than a number produced by a stand-in. `pytest -m embedder` runs the tests that need the model.
+The memory-specific cells of tools that rank by an embedder (Mem0, the LangGraph store) are the one opt-in: they are measured with a real sentence embedder, so `pip install -e ".[embedder]"` adds sentence-transformers and the first run fetches all-MiniLM-L6-v2 (about 90 MB) into the local Hugging Face cache. Without it those cells print `n/a` rather than a number produced by a stand-in. `pytest -m embedder` runs the tests that need the model. inspeximus ranks lexically at these sizes, so its row runs offline.
 
 ## Contents
 
@@ -166,6 +168,8 @@ flowchart TB
         LT["letta_block_history.py"]
         M0["mem0_at_rest.py"]
         M0S["mem0_semantic.py<br/>+ embedders.py"]
+        LGS["langgraph_store.py"]
+        IXR["inspeximus_recall.py"]
         OF["openfang.py (model)"]
         NM["naive_memory.py (baseline)"]
     end
@@ -184,12 +188,15 @@ flowchart TB
     MA --> LT
     MA --> M0
     SA --> M0S
+    SA --> LGS
+    SA --> IXR
     MA --> OF
     SA --> NM
     LG --> LGL
     LT --> LTL
     M0 --> M0L
     M0S --> M0L
+    LGS --> LGL
 ```
 
 Folder map:
@@ -208,9 +215,12 @@ agmi/
     mem0_common.py          One way to open Mem0 on a private local store, shared by both Mem0 rows
     mem0_at_rest.py         Real Mem0 on its local Qdrant store, offline
     mem0_semantic.py        Real Mem0 through its own add/search paths, real embedder
+    langgraph_store.py      Real LangGraph SqliteStore through put/search, real embedder
+    inspeximus_recall.py    Real inspeximus through remember/recall, default configuration
     openfang.py             Python model of OpenFang's hash-chained audit log
     naive_memory.py         Deliberately undefended retrieval baseline
-  embedders.py              Hashing stand-in (offline) and all-MiniLM-L6-v2 (opt-in) for the Mem0 rows
+  embedders.py              Hashing stand-in (offline) and all-MiniLM-L6-v2 (opt-in) for embedder-ranked rows
+  measure.py                One command that runs the memory-specific family on any target with provenance
   full_runner.py            Builds the matrix and prints the scorecard
 tests/                      One pinned test module per real target
 .github/workflows/          Scorecard on every push, plus weekly re-measurement
@@ -252,6 +262,21 @@ The memory-specific set asks a different question, "did attacker content reach t
 | verify() | True if the thread loads and every row deserializes |
 
 There is no integrity logic on the store. The only thing that can fail on reload is deserialization, so a tamper that keeps the msgpack valid is invisible. After `forge` the agent resumes from the attacker's checkpoint.
+
+### LangGraph long-term store (`SqliteStore`)
+
+LangGraph has two persistence components and they get two rows. The checkpointer above saves and resumes a graph's state and does not search. The store, `SqliteStore` from the same `langgraph-checkpoint-sqlite` package, is the long-term memory an agent writes facts into and searches by meaning, so it is the surface for the memory-specific attacks.
+
+| | |
+|---|---|
+| Measured on | langgraph-checkpoint-sqlite 3.1.1, `SqliteStore` with a vector index over the `text` field, all-MiniLM-L6-v2 via sentence-transformers 6.1.0, macOS arm64, Python 3.12 |
+| Written through | `store.put(("memories", user_id), key, {"text": ...})`; the text is stored as given |
+| Read through | `store.search(("memories", user_id), query=..., limit=k)`, every other parameter at its default |
+| Verdict | what `search` returns, untouched: no filtering and no floor of this suite's own |
+
+Two facts about the store decide its row. It applies no relevance floor: a memory sharing nothing with the query still comes back, at score 0.0. And user isolation is the namespace the caller passes, not a filter the store applies over a shared pool: a search for the parent prefix `("memories",)` returns every user's memories. An agent that searches its own user's namespace cannot see another's, so the bleed cell holds, but the guarantee sits in the caller's code, not in the store. Both facts are pinned in `tests/test_langgraph_store.py`.
+
+`python -m agmi.measure --target langgraph-store --embedder minilm` reproduces the row; `pytest -m embedder` pins it.
 
 ### Letta core memory checkpoint history
 
@@ -313,6 +338,20 @@ Two limits to read the receipts rows by. Detection is the audit call: after any 
 
 The adapter is `agmi/adapters/inspeximus_rows.py`; `pip install -e ".[inspeximus]"` (the extra pulls `inspeximus[crypto]`, since Ed25519 signing needs the `cryptography` package).
 
+**Memory-specific row.** The default configuration, driven only through `remember` and `recall`. Receipts are left off as a fresh store ships; they commit to what was written and are checked by a separate audit call, they take no part in ranking, so the two receipts rows keep `n/a` in these columns.
+
+| | |
+|---|---|
+| Measured on | inspeximus 3.0.0, `recall` defaults, Linux x86_64 and macOS arm64, Python 3.12 |
+| Written through | `remember(text, user_id=...)`; the text is stored as given |
+| Read through | `recall(query, k=k, user_id=...)`, every other parameter at its default |
+| Verdict | what `recall` returns, untouched |
+| Not measured | the opt-in levers `recall` offers (`trusted_only`, `prefer_trust`, `rerank`, `mmr`) and the fused lexical-plus-semantic mode; each is a different configuration and would be its own row |
+
+Two facts about inspeximus 3.0.0's default read path decide the row. `mode="auto"` ranks by lexical token overlap while the store holds fewer than 300 active memories and only then switches to a lexical-plus-semantic fusion, so at the sizes these attacks use the ranking is lexical whether or not an embedder is configured, and the row runs offline. And a memory written for one user is dropped from a `recall` scoped to another before ranking, which is why the bleed cell held; a memory written with no `user_id` at all is visible to every scoped `recall`, by design, and that is pinned too. `recall` will skip a record whose status is "hub" (a universal matcher), which is the shape of a hijack defence, but nothing in the default read path or in `sleep()`, the store's maintenance pass, flagged the stuffed entry as one, so it was served first at relevance 1.0.
+
+The adapter is `agmi/adapters/inspeximus_recall.py`; `python -m agmi.measure --target inspeximus` reproduces the row.
+
 ### Reference rows
 
 `openfang(model,fixed)` is a Python re-implementation of OpenFang's hash-chained audit log, including the tip persistence fix from [openfang PR #1287](https://github.com/RightNow-AI/openfang/pull/1287). It proves the five attacks are detectable by a chained store. It is not a measurement of the Rust binary.
@@ -364,7 +403,7 @@ Then add the adapter to `full_runner.py` and open a PR with the new scorecard ro
 |---|---|---|
 | 0.1 | Attack catalogue, adapter interface, OpenFang model, naive baseline | done |
 | 0.2 to 0.5 | Real at-rest measurements for LangGraph, Letta and Mem0; licensing; CI | done |
-| 0.6 | Memory-specific attacks on real retrieval tools with real embedders (Mem0 measured; Graphiti, LangGraph store, Letta archival and inspeximus recall next) | in progress |
+| 0.6 | Memory-specific attacks on real retrieval tools with real embedders (Mem0, LangGraph store and inspeximus measured; Letta archival and Graphiti next) | in progress |
 | 0.7 | Deserialization safety: crafted stored payloads that execute on load. Both LangGraph and Mem0 still unpickle from their stores, and one has patched a version of this before | planned |
 | 0.8 | In-flow attacks: replay, cross-thread poison, rollback during execution | planned |
 | 0.9 | Reference integrity layer: a hash chain in checkpoint metadata, offered upstream as an optional mode | planned |

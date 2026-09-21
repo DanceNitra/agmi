@@ -8,7 +8,9 @@ At-rest attacks (storage tampering) apply to any persisted store. Memory
 attacks (injection, bleed, hijack, indirect injection) apply only to tools
 that do user-scoped semantic retrieval. A tool that lacks one surface simply
 scores n/a there, which is itself informative: an audit log cannot be
-memory-injected; a bare vector store has no chain to truncate.
+memory-injected; a bare vector store has no chain to truncate. LangGraph
+gets two rows because its checkpointer (at rest) and its long-term store
+(retrieval) are different components.
 
 The checkedAt column names the detection point an adapter measures: "read"
 means verify() is the tool's read path, the call that returns memories to the
@@ -38,9 +40,22 @@ def _mem0_semantic():
         return None
 
 
+def _langgraph_store_semantic():
+    """The LangGraph long-term store row, or None. Same rule as Mem0: its
+    cells depend on ranking, so the row appears only with a real sentence
+    embedder available."""
+    try:
+        from agmi.adapters.langgraph_store import LangGraphSqliteStoreAdapter
+        from agmi.embedders import SentenceTransformerEmbedder
+        return LangGraphSqliteStoreAdapter(SentenceTransformerEmbedder())
+    except (ImportError, NotImplementedError, OSError):
+        return None
+
+
 def full_scorecard() -> str:
     from agmi.adapters.openfang import OpenFangAdapter
     from agmi.adapters.langgraph_sqlite import LangGraphSqliteAdapter
+    lg_store = _langgraph_store_semantic()
     try:
         from agmi.adapters.mem0_at_rest import Mem0AtRestAdapter
         mem0_row = ("mem0-qdrant-local", Mem0AtRestAdapter(), _mem0_semantic())
@@ -55,7 +70,11 @@ def full_scorecard() -> str:
         import inspeximus  # noqa: F401 - the adapter imports it lazily, so probe for it here
         from agmi.adapters.inspeximus_rows import (InspeximusDefaultAdapter, InspeximusRowsSidecarAdapter,
                                                    InspeximusRowsSidecarHeadAdapter)
-        inspeximus_rows = [("inspeximus-default", InspeximusDefaultAdapter(), None),
+        from agmi.adapters.inspeximus_recall import InspeximusRecallAdapter
+        # recall ranks lexically at these sizes, so the default row's memory
+        # cells need no embedder and run everywhere; receipts do not take
+        # part in ranking, so the two receipts rows keep n/a there.
+        inspeximus_rows = [("inspeximus-default", InspeximusDefaultAdapter(), InspeximusRecallAdapter()),
                            ("inspeximus-rcpt+dir", InspeximusRowsSidecarAdapter(), None),
                            ("inspeximus-rcpt+dir+home", InspeximusRowsSidecarHeadAdapter(), None)]
     except ImportError:
@@ -72,6 +91,7 @@ def full_scorecard() -> str:
     rows = [
         ("openfang(model,fixed)", OpenFangAdapter(strict_tip=True), None),
         ("langgraph-sqlite", LangGraphSqliteAdapter(), None),
+        *([("langgraph-sqlite-store", None, lg_store)] if lg_store else []),
         *([letta_row] if letta_row else []),
         *([mem0_row] if mem0_row else []),
         *inspeximus_rows,
