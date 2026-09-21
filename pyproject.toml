@@ -24,6 +24,9 @@ langgraph = ["langgraph-checkpoint-sqlite"]
 letta = ["letta", "asyncpg", "psycopg2-binary", "pgvector", "pgserver"]
 mem0 = ["mem0ai", "qdrant-client"]
 inspeximus = ["inspeximus[crypto]>=2.38.0"]
+# A real sentence embedder for the memory-specific Mem0 cells. Pulls in
+# torch; the model (about 90 MB) is fetched once and cached locally.
+embedder = ["sentence-transformers"]
 
 [project.scripts]
 agmi = "agmi.runner:main"
@@ -35,3 +38,12 @@ Issues = "https://github.com/tech4biz-yasha/agmi/issues"
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "embedder: needs sentence-transformers and a cached all-MiniLM-L6-v2; run with: pytest -m embedder",
+]
+# The default run is the offline suite. Tests that need a downloaded model
+# are opted into with `pytest -m embedder`.
+addopts = "-m 'not embedder'"

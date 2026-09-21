@@ -13,9 +13,9 @@ memory text (`data`), an md5 `hash` of that text, and timestamps.
 
 This adapter drives real Mem0 through its own add()/get_all()/search()/
 history() and edits the on-disk store directly for the attacks. To keep it
-offline and deterministic it constructs Memory with a dummy OpenAI key and
-then swaps in a hashing embedder (bag-of-words into 64 dims). Every add()
-uses infer=False so no LLM is called. Nothing about Mem0's storage or
+offline and deterministic it opens Memory through mem0_common with the
+hashing embedder from agmi.embedders (bag-of-words into 64 dims). Every
+add() uses infer=False so no LLM is called. Nothing about Mem0's storage or
 integrity behaviour depends on which embedder produced the vectors.
 
 What "verify" means here: Mem0 has no integrity check on its stores. The
@@ -28,34 +28,20 @@ nothing. That is the tool's honest answer.
 from __future__ import annotations
 
 import base64
-import hashlib
-import math
-import os
 import pickle
-import re
 import sqlite3
 import tempfile
 import uuid
 from pathlib import Path
 
 from agmi.adapters.base import MemoryAdapter, Record
+from agmi.adapters.mem0_common import (
+    close_local_memory, history_db, open_local_memory, points_db,
+)
+from agmi.embedders import HashEmbedder
 
 USER = "victim"
 SEED_TOKEN = "agmi-seed-"
-COLLECTION = "agmi"
-DIMS = 64
-
-
-class HashEmbedder:
-    """Deterministic bag-of-words embedder so Mem0 runs with no network."""
-
-    def embed(self, text, memory_action=None):
-        v = [0.0] * DIMS
-        for tok in re.findall(r"[a-z0-9]+", text.lower()):
-            h = int(hashlib.sha256(tok.encode()).hexdigest(), 16)
-            v[h % DIMS] += 1.0 if (h >> 8) % 2 else -1.0
-        n = math.sqrt(sum(x * x for x in v)) or 1.0
-        return [x / n for x in v]
 
 
 class Mem0AtRestAdapter(MemoryAdapter):
@@ -68,36 +54,10 @@ class Mem0AtRestAdapter(MemoryAdapter):
 
     # --- lifecycle -----------------------------------------------------
     def _open(self):
-        os.environ.setdefault("MEM0_TELEMETRY", "false")
-        os.environ.setdefault("OPENAI_API_KEY", "sk-agmi-offline-dummy")
-        try:
-            from mem0 import Memory
-        except ImportError as exc:
-            raise NotImplementedError("mem0ai not installed") from exc
-        cfg = {
-            "vector_store": {"provider": "qdrant", "config": {
-                "path": str(self._root / "qdrant"),
-                "collection_name": COLLECTION,
-                "embedding_model_dims": DIMS,
-                "on_disk": True,
-            }},
-            "history_db_path": str(self._root / "history.db"),
-        }
-        m = Memory.from_config(cfg)
-        m.embedding_model = HashEmbedder()
-        return m
+        return open_local_memory(self._root, HashEmbedder())
 
     def _close(self) -> None:
-        if self._mem is None:
-            return
-        try:
-            self._mem.vector_store.client.close()
-        except Exception:  # noqa: BLE001
-            pass
-        try:
-            self._mem.db.connection.close()
-        except Exception:  # noqa: BLE001
-            pass
+        close_local_memory(self._mem)
         self._mem = None
 
     def setup(self) -> None:
@@ -120,11 +80,11 @@ class Mem0AtRestAdapter(MemoryAdapter):
     # --- raw store access (used by attacks) ----------------------------
     @property
     def _points_db(self) -> Path:
-        return self._root / "qdrant" / "collection" / COLLECTION / "storage.sqlite"
+        return points_db(self._root)
 
     def _order(self) -> list[str]:
         """Memory ids in insertion order, from Mem0's own history log."""
-        conn = sqlite3.connect(self._root / "history.db")
+        conn = sqlite3.connect(history_db(self._root))
         ids = [r[0] for r in conn.execute(
             "SELECT memory_id FROM history WHERE event = 'ADD' "
             "ORDER BY created_at ASC, rowid ASC")]
@@ -189,7 +149,7 @@ class Mem0AtRestAdapter(MemoryAdapter):
         forged = self.mutate_payload(forged)
         # Register the forged id in the history log too, as an attacker with
         # store access would, so Mem0's own history() knows the memory.
-        conn = sqlite3.connect(self._root / "history.db")
+        conn = sqlite3.connect(history_db(self._root))
         conn.execute(
             "INSERT INTO history (id, memory_id, old_memory, new_memory, "
             "event, created_at, updated_at, is_deleted, actor_id, role) "

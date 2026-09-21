@@ -1,6 +1,23 @@
 # Changelog
 
 ## Unreleased
+- Mem0 memory-specific adapter (`mem0_semantic.py`): real Mem0 driven
+  through its own `add(infer=False)` and `search(filters, top_k)` paths on
+  a private local Qdrant store, for the injection, bleed, hijack and
+  indirect-prompt-injection attacks. The embedder is pluggable
+  (`agmi/embedders.py`): the offline hashing embedder for plumbing and the
+  bleed cell, all-MiniLM-L6-v2 via sentence-transformers (new `embedder`
+  extra) for every cell that depends on ranking. Rows carry a
+  `measured_on()` line naming the Mem0 version, embedder and which of
+  Mem0's optional ranking signals were on.
+- Recorded two facts about mem0ai 2.0.20's default read path that the row
+  depends on: it drops candidates whose semantic score is under 0.1 before
+  ranking, and its result count is `top_k` (a `limit=` argument is silently
+  ignored and 20 returned).
+- Shared Mem0 plumbing moved into `mem0_common.py`; the at-rest adapter
+  now opens its store through it. Measured behaviour unchanged.
+- pytest tiers: the default run stays offline; `pytest -m embedder` runs
+  tests that need the cached model.
 - inspeximus adapter (inspeximus 2.38.0, SQLite store with an opt-in signed
   receipt chain and a chain head kept in the user's config home), three rows:
   receipts off reads like LangGraph, five accepted; receipts on with the

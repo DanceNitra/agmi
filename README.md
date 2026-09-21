@@ -37,6 +37,16 @@ Three of the most used agent memory layers were seeded through their own APIs, e
 
 This is a design gap, not a bug. LangGraph, Letta and Mem0 do not claim their stores are tamper evident. inspeximus makes that claim for its receipts mode, and the table shows what that buys and where it stops. The point of agmi is that nobody had measured the gap with one yardstick, and that the gap matters the moment agent memory is used as a record.
 
+### The same store, attacked through its own API
+
+The second attack family never touches a file. It writes memories through the tool's normal `add` and reads them through the tool's normal `search`, the way an agent does, and asks whether a planted, leaked, padded or instruction-shaped memory comes back as ordinary context.
+
+| Target | Version | memory_injection | cross_session_bleed | retrieval_hijack | indirect_prompt_injection |
+|---|---|:-:|:-:|:-:|:-:|
+| Mem0 local Qdrant store, `infer=False`, all-MiniLM-L6-v2 | mem0ai 2.0.20 | surfaced | kept out | kept out | surfaced |
+
+"Surfaced" means the attacker's memory came back from the read path as context for the agent. "Kept out" means it did not. The two kept-out cells have different causes. The bleed cell held because Mem0 filters retrieval on `user_id` inside Qdrant. The hijack cell held because Mem0's default search drops any candidate scoring under 0.1, and the padded entry, which is about a different topic from the query, fell under that floor with a real embedder. The two surfaced cells have one cause: Mem0 keeps no record of where a memory came from and does not inspect what it returns, so a planted memory or an instruction disguised as a memory is as trusted as a genuine one. Measured with a real sentence embedder, never with the offline stand-in; see the Mem0 section for the method and what is not measured.
+
 ## Quick start
 
 ```bash
@@ -47,6 +57,8 @@ PYTHONPATH=. python3 agmi/full_runner.py 2>/dev/null | grep "|"
 ```
 
 Everything runs offline. No API keys, no model downloads, no Docker. The Letta row starts an embedded Postgres through `pgserver`; set `LETTA_PG_URI` if you would rather point it at your own.
+
+The memory-specific Mem0 cells are the one opt-in: they are measured with a real sentence embedder, so `pip install -e ".[embedder]"` adds sentence-transformers and the first run fetches all-MiniLM-L6-v2 (about 90 MB) into the local Hugging Face cache. Without it those cells print `n/a` rather than a number produced by a stand-in. `pytest -m embedder` runs the tests that need the model.
 
 ## Contents
 
@@ -153,6 +165,7 @@ flowchart TB
         LG["langgraph_sqlite.py"]
         LT["letta_block_history.py"]
         M0["mem0_at_rest.py"]
+        M0S["mem0_semantic.py<br/>+ embedders.py"]
         OF["openfang.py (model)"]
         NM["naive_memory.py (baseline)"]
     end
@@ -170,11 +183,13 @@ flowchart TB
     MA --> LG
     MA --> LT
     MA --> M0
+    SA --> M0S
     MA --> OF
     SA --> NM
     LG --> LGL
     LT --> LTL
     M0 --> M0L
+    M0S --> M0L
 ```
 
 Folder map:
@@ -190,9 +205,12 @@ agmi/
     semantic_base.py        SemanticMemoryAdapter interface for retrieval tools
     langgraph_sqlite.py     Real LangGraph SqliteSaver
     letta_block_history.py  Real Letta core memory checkpoint history (Postgres)
+    mem0_common.py          One way to open Mem0 on a private local store, shared by both Mem0 rows
     mem0_at_rest.py         Real Mem0 on its local Qdrant store, offline
+    mem0_semantic.py        Real Mem0 through its own add/search paths, real embedder
     openfang.py             Python model of OpenFang's hash-chained audit log
     naive_memory.py         Deliberately undefended retrieval baseline
+  embedders.py              Hashing stand-in (offline) and all-MiniLM-L6-v2 (opt-in) for the Mem0 rows
   full_runner.py            Builds the matrix and prints the scorecard
 tests/                      One pinned test module per real target
 .github/workflows/          Scorecard on every push, plus weekly re-measurement
@@ -259,7 +277,21 @@ Letta's undo and redo are written to tolerate missing sequence numbers, so a hol
 
 Mem0 writes an ADD event to `history` for every memory and stores an md5 of each memory's text. Neither is checked: the hash is for de-duplication and the history is never reconciled with the vector store. After `truncate` the history still lists five memories while the agent can see three, and Mem0 reports nothing.
 
-The memory-specific columns stay `n/a` for Mem0 because retrieval ranking under the offline embedder would measure our embedder, not Mem0.
+**Memory-specific row.** The same library on the same private local store, driven only through its own write and read paths.
+
+| | |
+|---|---|
+| Measured on | mem0ai 2.0.20 default install (semantic ranking only; the optional BM25 keyword and entity boosts were not installed), all-MiniLM-L6-v2 via sentence-transformers 6.1.0, macOS arm64, Python 3.12 |
+| Written through | `Memory.add(text, user_id=..., infer=False)`; the text is stored as given |
+| Read through | `Memory.search(query, filters={"user_id": ...}, top_k=k)`, every other parameter at Mem0's default |
+| Verdict | what `search` returns, untouched: no filtering and no floor of this suite's own |
+| Not measured | the default `infer=True` path, where a hosted LLM extracts facts before storage. It needs a key and a network, and it is a separate guarantee from storage, scoping and ranking, which are the same in both modes |
+
+Two facts about mem0ai 2.0.20's default read path decide these cells. Retrieval is filtered on `user_id` inside Qdrant, which is why the bleed cell held. Any candidate whose semantic score is under 0.1 is dropped before ranking, which is why the hijack cell held: the padded entry is about a different topic from the query, so a real embedder put it under the floor and Mem0 never returned it. Nothing records where a memory came from or inspects what is returned, so the planted memory and the instruction-shaped memory both came back as ordinary context.
+
+One thing to know about `search`: on mem0ai 2.x the result count is `top_k`, and a `limit=` argument is silently ignored with the default of 20 returned. The adapter passes `top_k`.
+
+The offline hashing embedder is never used for these cells, because ranking under it would measure this suite, not Mem0. `python -m agmi.adapters.mem0_semantic --embedder minilm` reproduces the row and prints the exact provenance line; `pytest -m embedder` pins it.
 
 ### inspeximus
 
@@ -285,7 +317,7 @@ The adapter is `agmi/adapters/inspeximus_rows.py`; `pip install -e ".[inspeximus
 
 `openfang(model,fixed)` is a Python re-implementation of OpenFang's hash-chained audit log, including the tip persistence fix from [openfang PR #1287](https://github.com/RightNow-AI/openfang/pull/1287). It proves the five attacks are detectable by a chained store. It is not a measurement of the Rust binary.
 
-`naive-mem` is a deliberately undefended retriever. A "safe" from it is a weak signal and exists only so the memory-specific attacks have something to run against until real retrieval adapters land.
+`naive-mem` is a deliberately undefended retriever. A "safe" from it is a weak signal; it exists so the memory-specific attacks have an undefended floor to compare real tools against.
 
 ## Reading the scorecard honestly
 
@@ -332,7 +364,7 @@ Then add the adapter to `full_runner.py` and open a PR with the new scorecard ro
 |---|---|---|
 | 0.1 | Attack catalogue, adapter interface, OpenFang model, naive baseline | done |
 | 0.2 to 0.5 | Real at-rest measurements for LangGraph, Letta and Mem0; licensing; CI | done |
-| 0.6 | Memory-specific attacks on real retrieval tools with real embedders (Mem0, Graphiti) | next |
+| 0.6 | Memory-specific attacks on real retrieval tools with real embedders (Mem0 measured; Graphiti, LangGraph store, Letta archival and inspeximus recall next) | in progress |
 | 0.7 | Deserialization safety: crafted stored payloads that execute on load. Both LangGraph and Mem0 still unpickle from their stores, and one has patched a version of this before | planned |
 | 0.8 | In-flow attacks: replay, cross-thread poison, rollback during execution | planned |
 | 0.9 | Reference integrity layer: a hash chain in checkpoint metadata, offered upstream as an optional mode | planned |

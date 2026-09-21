@@ -21,12 +21,29 @@ same guarantee.
 from __future__ import annotations
 
 
+def _mem0_semantic():
+    """The memory-specific adapter for the Mem0 row, or None.
+
+    Those cells are published only when measured with a real sentence
+    embedder, so the row gets its semantic adapter only if
+    sentence-transformers is installed and the model can be loaded. Without
+    it the memory-specific columns stay n/a rather than being measured with
+    the offline hashing stand-in, which would measure this suite, not Mem0.
+    """
+    try:
+        from agmi.adapters.mem0_semantic import Mem0SemanticAdapter
+        from agmi.embedders import SentenceTransformerEmbedder
+        return Mem0SemanticAdapter(SentenceTransformerEmbedder())
+    except (ImportError, NotImplementedError, OSError):
+        return None
+
+
 def full_scorecard() -> str:
     from agmi.adapters.openfang import OpenFangAdapter
     from agmi.adapters.langgraph_sqlite import LangGraphSqliteAdapter
     try:
         from agmi.adapters.mem0_at_rest import Mem0AtRestAdapter
-        mem0_row = ("mem0-qdrant-local", Mem0AtRestAdapter(), None)
+        mem0_row = ("mem0-qdrant-local", Mem0AtRestAdapter(), _mem0_semantic())
     except ImportError:
         mem0_row = None
     try:
@@ -83,6 +100,9 @@ def full_scorecard() -> str:
             sm_ad.name = label
             for atk in mem:
                 cells[(label, atk.name)] = atk.run(sm_ad).status
+            close = getattr(sm_ad, "close", None)
+            if callable(close):
+                close()
         else:
             for atk in mem:
                 cells[(label, atk.name)] = "n/a"
