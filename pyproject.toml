@@ -32,7 +32,8 @@ embedder = ["sentence-transformers"]
 agmi = "agmi.runner:main"
 
 [project.urls]
-Homepage = "https://github.com/tech4biz-yasha/agmi"
+Homepage = "https://agentmemoryintegrity.org/"
+Repository = "https://github.com/tech4biz-yasha/agmi"
 Issues = "https://github.com/tech4biz-yasha/agmi/issues"
 
 [build-system]
