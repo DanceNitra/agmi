@@ -1,6 +1,17 @@
 # Changelog
 
 ## Unreleased
+- `retrieval_hijack` rebuilt so a relevance floor cannot pass it. The
+  victim holds six genuine memories on one topic and the agent takes three;
+  the attacker's single entry is stuffed with the topic's question words
+  around an unrelated payload, so it is on topic by construction and can
+  only appear by outranking a genuine memory. The earlier version padded
+  toward a different topic, which any score floor kept out for free. The
+  naive baseline now fails this cell at rank 1, as an undefended ranker
+  should; earlier scorecards showed it as safe. Mem0's cell is re-measured
+  in this release.
+- CI actions moved to `actions/checkout@v5` and `actions/setup-python@v6`
+  (the v4/v5 tags run on Node 20, which GitHub is retiring).
 - Mem0 memory-specific adapter (`mem0_semantic.py`): real Mem0 driven
   through its own `add(infer=False)` and `search(filters, top_k)` paths on
   a private local Qdrant store, for the injection, bleed, hijack and

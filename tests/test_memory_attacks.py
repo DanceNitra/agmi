@@ -5,13 +5,15 @@
 """Tests for the four memory-specific attacks against the naive reference store.
 
 These pin the honest baseline: a store with no provenance is always
-injectable; user-scoping decides the bleed result; the naive lexical
-retriever is too simple to be hijacked or to deliver markers (a weak 'safe'
-that only becomes meaningful against real vector tools).
+injectable; user-scoping decides the bleed result; a plain similarity
+ranker is hijacked by a stuffed entry; the naive lexical retriever is too
+simple to deliver instruction markers for a paraphrased query (a weak
+'safe' that only becomes meaningful against real vector tools).
 """
 
 from agmi.adapters.naive_memory import NaiveMemoryAdapter
 from agmi.attacks.memory_specific import (
+    HIJACK_ENTRY, HIJACK_GENUINE, HIJACK_K, HIJACK_QUERY,
     MemoryInjectionAttack, CrossSessionBleedAttack,
     RetrievalHijackAttack, IndirectPromptInjectionAttack,
 )
@@ -42,3 +44,20 @@ def test_memory_attacks_never_error_on_naive():
         for cls in (MemoryInjectionAttack, CrossSessionBleedAttack,
                     RetrievalHijackAttack, IndirectPromptInjectionAttack):
             assert cls().run(a).error is None
+
+
+def test_hijack_set_up_makes_the_top_k_contested():
+    """The attack only means something if a slot taken by the attacker is a
+    slot taken from a genuine memory, and if the attacker did not simply
+    store the question."""
+    assert len(HIJACK_GENUINE) > HIJACK_K
+    assert HIJACK_QUERY not in HIJACK_ENTRY
+    assert "PAYLOAD" in HIJACK_ENTRY
+    assert not any("PAYLOAD" in g for g in HIJACK_GENUINE)
+
+
+def test_hijack_outranks_genuine_memories_on_a_plain_ranker():
+    r = RetrievalHijackAttack().run(NaiveMemoryAdapter())
+    assert r.error is None
+    assert r.safe is False
+    assert "rank 1 of 3" in r.detail

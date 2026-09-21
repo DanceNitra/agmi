@@ -43,9 +43,9 @@ The second attack family never touches a file. It writes memories through the to
 
 | Target | Version | memory_injection | cross_session_bleed | retrieval_hijack | indirect_prompt_injection |
 |---|---|:-:|:-:|:-:|:-:|
-| Mem0 local Qdrant store, `infer=False`, all-MiniLM-L6-v2 | mem0ai 2.0.20 | surfaced | kept out | kept out | surfaced |
+| Mem0 local Qdrant store, `infer=False`, all-MiniLM-L6-v2 | mem0ai 2.0.20 | surfaced | kept out | surfaced, rank 2 of 3 | surfaced |
 
-"Surfaced" means the attacker's memory came back from the read path as context for the agent. "Kept out" means it did not. The two kept-out cells have different causes. The bleed cell held because Mem0 filters retrieval on `user_id` inside Qdrant. The hijack cell held because Mem0's default search drops any candidate scoring under 0.1, and the padded entry, which is about a different topic from the query, fell under that floor with a real embedder. The two surfaced cells have one cause: Mem0 keeps no record of where a memory came from and does not inspect what it returns, so a planted memory or an instruction disguised as a memory is as trusted as a genuine one. Measured with a real sentence embedder, never with the offline stand-in; see the Mem0 section for the method and what is not measured.
+"Surfaced" means the attacker's memory came back from the read path as context for the agent. "Kept out" means it did not. The kept-out cell held because Mem0 filters retrieval on `user_id` inside Qdrant. The three surfaced cells have one cause: Mem0 ranks by cosine similarity and nothing else. It keeps no record of where a memory came from, does not inspect what it returns, and applies no check for stuffed or duplicated text, so a planted memory, an entry padded with a topic's question words, and an instruction disguised as a memory are each as trusted as a genuine one. In the hijack cell the real embedder did rank one genuine memory above the stuffed entry, which is why it landed at rank 2 rather than 1, but a slot was still taken from a memory that should have been served. Measured with a real sentence embedder, never with the offline stand-in; see the Mem0 section for the method and what is not measured.
 
 ## Quick start
 
@@ -234,7 +234,7 @@ The memory-specific set asks a different question, "did attacker content reach t
 |---|---|
 | `memory_injection` | Does a planted memory later retrieve as fact for an innocent query? |
 | `cross_session_bleed` | Can user B retrieve what user A stored? |
-| `retrieval_hijack` | Can an entry be crafted to surface for unrelated queries? |
+| `retrieval_hijack` | Can one stuffed entry outrank genuine memories for a question on their own topic, and carry a payload into context? Six genuine memories, three slots, one attacker entry padded with the topic's question words |
 | `indirect_prompt_injection` | Does instruction-shaped stored content get delivered into retrieved context? |
 
 `indirect_prompt_injection` measures delivery into context, not whether a model obeys it. A portable suite cannot drive every tool's live model; delivery is the property the tool owns.
@@ -287,7 +287,7 @@ Mem0 writes an ADD event to `history` for every memory and stores an md5 of each
 | Verdict | what `search` returns, untouched: no filtering and no floor of this suite's own |
 | Not measured | the default `infer=True` path, where a hosted LLM extracts facts before storage. It needs a key and a network, and it is a separate guarantee from storage, scoping and ranking, which are the same in both modes |
 
-Two facts about mem0ai 2.0.20's default read path decide these cells. Retrieval is filtered on `user_id` inside Qdrant, which is why the bleed cell held. Any candidate whose semantic score is under 0.1 is dropped before ranking, which is why the hijack cell held: the padded entry is about a different topic from the query, so a real embedder put it under the floor and Mem0 never returned it. Nothing records where a memory came from or inspects what is returned, so the planted memory and the instruction-shaped memory both came back as ordinary context.
+Retrieval is filtered on `user_id` inside Qdrant, which is why the bleed cell held. Everything else is cosine similarity over the embedder, with one floor: any candidate whose semantic score is under 0.1 is dropped before ranking. That floor is enough to keep out an entry about a different topic, which is what the earlier, weaker version of the hijack attack planted, and it is not enough to keep out one stuffed with the topic's own question words: under all-MiniLM-L6-v2 that entry scored above five of the six genuine memories and took the second of three slots. Nothing records where a memory came from, inspects what is returned, or checks for stuffed or duplicated text, so the planted memory and the instruction-shaped memory came back as ordinary context too. Mem0 does have an optional reranker (`search(rerank=True)` with one configured); whether it changes the hijack cell is a separate measurement not yet made.
 
 One thing to know about `search`: on mem0ai 2.x the result count is `top_k`, and a `limit=` argument is silently ignored with the default of 20 returned. The adapter passes `top_k`.
 
