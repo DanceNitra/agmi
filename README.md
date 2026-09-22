@@ -78,8 +78,10 @@ The memory-specific cells of tools that rank by an embedder (Mem0, the LangGraph
 6. [Targets and what each measurement means](#targets-and-what-each-measurement-means)
 7. [Reading the scorecard honestly](#reading-the-scorecard-honestly)
 8. [Writing an adapter](#writing-an-adapter)
-9. [Roadmap](#roadmap)
-10. [Contributing, security, citation](#contributing-security-citation)
+9. [Where the attacks come from](#where-the-attacks-come-from)
+10. [Scope, and what is not measured](#scope-and-what-is-not-measured)
+11. [Roadmap](#roadmap)
+12. [Contributing, security, citation](#contributing-security-citation)
 
 ## Why this exists
 
@@ -379,7 +381,7 @@ The adapter is `agmi/adapters/inspeximus_recall.py`; `python -m agmi.measure --t
 
 - **`n/a` is information.** Which attacks apply depends on what a tool claims to be. An audit log cannot be memory-injected; a bare vector store has no chain to truncate. No tool faces all nine. The map of which cells apply is part of the finding.
 - **"Accepted" is not "vulnerable to remote attack".** The attacker already has store access. The question is only whether the tool can tell.
-- **Model rows are labelled.** Anything not measured against the real library says `(model)` in its name and is excluded from the headline table.
+- **Model rows are labelled.** Anything not measured against the real library says `(model)` in its name. Two appear in the headline tables, the OpenFang hash chain and the defended store, only to show that every cell can be passed; neither is a product.
 - **Versions are pinned.** Each real target has a test asserting the measured result at the measured version. When a maintainer adds a check the test fails, the CI goes red, and the scorecard gets updated with the new version and a note. The weekly CI run does this against the latest release without anyone needing to remember.
 
 ## Writing an adapter
