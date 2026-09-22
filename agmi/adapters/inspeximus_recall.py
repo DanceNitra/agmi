@@ -89,16 +89,32 @@ class InspeximusRecallAdapter(SemanticMemoryAdapter):
         ``prefer_trust``, ``rerank``, ``mmr``) as its own configuration row.
         Nothing else about the adapter changes, so a lever row differs from
         the default row by exactly that argument.
+    provenance:
+        Record each item's channel as the memory's ``source``, the field
+        inspeximus resolves sources by. Off by default, so the default row
+        is unchanged: a store that keeps provenance is a different
+        configuration and gets its own row.
+    trust_seeds:
+        Canonical source strings the store treats as a trust root. With
+        ``recall_kwargs={"trusted_only": True}`` the read path serves only
+        memories reachable from that root, which is the tool's own answer
+        to a planted memory. Empty by default. Note the fail-closed
+        behaviour: ``trusted_only`` with no seeds returns nothing, which
+        the family's positive control reports as n/a rather than as a pass.
     label:
         Scorecard row name. Defaults to ``LABEL``.
     """
 
     def __init__(self, mode: str = "auto", embed=None,
                  recall_kwargs: dict | None = None,
-                 label: str | None = None):
+                 label: str | None = None,
+                 provenance: bool = False,
+                 trust_seeds: set | None = None):
         self.mode = mode
         self.embed = embed
         self.recall_kwargs = dict(recall_kwargs or {})
+        self.provenance = provenance
+        self.trust_seeds = set(trust_seeds or ())
         self.name = label or LABEL
         self._dir: tempfile.TemporaryDirectory | None = None
         self._store = None
@@ -117,6 +133,8 @@ class InspeximusRecallAdapter(SemanticMemoryAdapter):
         path = Path(self._dir.name) / "memory.sqlite"
         kwargs = {"embed": self.embed} if self.embed is not None else {}
         self._store = Inspeximus(str(path), **kwargs)
+        if self.trust_seeds:
+            self._store.trust_seeds = set(self.trust_seeds)
 
     def close(self) -> None:
         """Drop the store and delete its directory. Idempotent."""
@@ -140,7 +158,8 @@ class InspeximusRecallAdapter(SemanticMemoryAdapter):
     def add_memory(self, item: MemoryItem) -> None:
         meta = dict(item.metadata)
         meta.setdefault("source", item.source)
-        self._memory().remember(item.text, user_id=item.user_id, meta=meta)
+        extra = {"source": {"doc": item.source}} if self.provenance else {}
+        self._memory().remember(item.text, user_id=item.user_id, meta=meta, **extra)
 
     def retrieve(self, query: str, user_id: str, k: int = 5) -> list[Retrieved]:
         rows = self._memory().recall(query, k=k, user_id=user_id,
@@ -167,6 +186,10 @@ class InspeximusRecallAdapter(SemanticMemoryAdapter):
                    "300 memories" if self.mode == "auto" else f"mode={self.mode}")
         levers = (", " + ", ".join(f"{k}={v!r}" for k, v in self.recall_kwargs.items())
                   if self.recall_kwargs else "")
+        if self.provenance:
+            levers += ", provenance recorded as the memory's source"
+        if self.trust_seeds:
+            levers += ", trust_seeds=" + repr(sorted(self.trust_seeds))
         return (f"inspeximus {inspeximus_version()}, receipts off, "
                 f"recall defaults ({ranking}){levers}, "
                 f"{platform.system()} {platform.machine()}, "
