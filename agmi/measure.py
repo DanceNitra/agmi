@@ -58,6 +58,14 @@ def _langgraph_store(embedder: str):
     return LangGraphSqliteStoreAdapter(get_embedder(embedder))
 
 
+def _letta_archival(embedder: str):
+    from agmi.adapters.letta_block_history import _ensure_env
+    _ensure_env()  # before letta is imported anywhere
+    from agmi.adapters.letta_archival import LettaArchivalAdapter
+    from agmi.embedders import get_embedder
+    return LettaArchivalAdapter(get_embedder(embedder))
+
+
 def _inspeximus(embedder: str):
     from agmi.adapters.inspeximus_recall import InspeximusRecallAdapter
     return InspeximusRecallAdapter()
@@ -78,6 +86,7 @@ TARGETS: dict[str, Callable[[str], SemanticMemoryAdapter]] = {
     "mem0": _mem0,
     "mem0-live": _mem0_live,
     "langgraph-store": _langgraph_store,
+    "letta-archival": _letta_archival,
     "inspeximus": _inspeximus,
 }
 

@@ -39,6 +39,16 @@ def _available():
         yield "inspeximus", InspeximusRecallAdapter
     except ImportError:
         pass
+    try:
+        import asyncpg  # noqa: F401
+        import psycopg2  # noqa: F401
+        from agmi.adapters.letta_block_history import _ensure_env
+        _ensure_env()
+        import letta  # noqa: F401
+        from agmi.adapters.letta_archival import LettaArchivalAdapter
+        yield "letta-archival", LettaArchivalAdapter
+    except (ImportError, NotImplementedError):
+        pass
 
 
 ADAPTERS = list(_available())

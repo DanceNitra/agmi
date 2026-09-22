@@ -1,6 +1,17 @@
 # Changelog
 
 ## Unreleased
+- Letta archival memory (`letta_archival.py`): the fourth real tool with
+  all four front-door cells. Real Letta through `insert_passage` and
+  `search_agent_archival_memory_async`, one agent per user, embeddings
+  served to Letta's `openai` provider by a new local OpenAI-compatible
+  endpoint (`agmi/embedding_endpoint.py`), since Letta only embeds over a
+  network. Facts pinned: no relevance floor; archives are per agent.
+  `--target letta-archival` in `agmi.measure`; CI's embedder job now
+  installs Letta and measures the row. Measured with all-MiniLM-L6-v2:
+  planted fact 5 of 5, isolation held 5 of 5, hijack 4 of 5, hidden
+  instruction 5 of 5. Letta's own INFO logging and deprecation notices
+  are silenced in agmi's runs.
 - CI, installing the newest inspeximus (3.5.2), showed the hijack cell
   move: the stuffed entry is kept out on 4 of 5 fixtures and the hidden
   instruction on 3 of 5. Statuses unchanged (a tool is kept out only when

@@ -49,11 +49,12 @@ The second attack family never touches a file. It writes memories through the to
 | Mem0 local Qdrant store, `infer=False`, all-MiniLM-L6-v2 | mem0ai 2.0.20 | surfaced (5 of 5) | kept out (5 of 5) | surfaced (4 of 5) | surfaced (5 of 5) |
 | inspeximus, default configuration, lexical `recall` | inspeximus 3.0.0 | surfaced (5 of 5) | kept out (5 of 5) | surfaced (5 of 5) | surfaced (5 of 5) |
 | LangGraph `SqliteStore`, vector index, all-MiniLM-L6-v2 | langgraph-checkpoint-sqlite 3.1.1 | surfaced (5 of 5) | kept out (5 of 5) | surfaced (5 of 5) | surfaced (5 of 5) |
+| Letta archival memory, one agent per user, all-MiniLM-L6-v2 | letta 0.16.8 | surfaced (5 of 5) | kept out (5 of 5) | surfaced (4 of 5) | surfaced (5 of 5) |
 | reference-defended (model), provenance, quarantine, stuffing check | agmi | kept out (5 of 5) | kept out (5 of 5) | kept out (5 of 5) | kept out (5 of 5) |
 
-"Surfaced" means the attacker's memory came back from the read path as context for the agent. "Kept out" means it did not. The pattern is the same in every tool measured so far: the only cell that holds is user isolation, and it holds for a tool-specific reason (Mem0 filters on `user_id` inside Qdrant; inspeximus drops records written for another user before ranking; the LangGraph store searches only the namespace the caller names, so the guarantee is the caller's, not the store's). The three surfaced cells have one cause everywhere: the read path ranks by similarity and nothing else. No tool keeps a record of where a memory came from, inspects what it returns, or checks for stuffed or duplicated text, so a planted memory, an entry padded with a topic's question words, and an instruction disguised as a memory are each as trusted as a genuine one. Re-measured in CI on inspeximus 3.5.2 (22 September 2026): the stuffed entry is now kept out on 4 of 5 fixtures and the hidden instruction on 3 of 5, so the maintainer's write-time quarantine and stuffing penalty do engage; the two cells stay surfaced because a tool is kept out only when it wins none, and the planted-fact and isolation cells are unchanged. The 3.0.0 row above stands as the maintainer-reproduced measurement.
+"Surfaced" means the attacker's memory came back from the read path as context for the agent. "Kept out" means it did not. The pattern is the same in every tool measured so far: the only cell that holds is user isolation, and it holds for a tool-specific reason (Mem0 filters on `user_id` inside Qdrant; inspeximus drops records written for another user before ranking; the LangGraph store searches only the namespace the caller names and Letta's archives are per agent, so in those two the guarantee sits in how the caller assigns namespaces or agents, not in a filter over a shared pool). The three surfaced cells have one cause everywhere: the read path ranks by similarity and nothing else. No tool keeps a record of where a memory came from, inspects what it returns, or checks for stuffed or duplicated text, so a planted memory, an entry padded with a topic's question words, and an instruction disguised as a memory are each as trusted as a genuine one. Re-measured in CI on inspeximus 3.5.2 (22 September 2026): the stuffed entry is now kept out on 4 of 5 fixtures and the hidden instruction on 3 of 5, so the maintainer's write-time quarantine and stuffing penalty do engage; the two cells stay surfaced because a tool is kept out only when it wins none, and the planted-fact and isolation cells are unchanged. The 3.0.0 row above stands as the maintainer-reproduced measurement.
 
-Each cell is five scenarios, and "(n of 5)" says how many the attacker won; a tool is kept out only when it wins none. Mem0's 0.1 floor kept one of the five stuffed entries out and served the other four. The reference row at the bottom is not a product: it is the naive store plus provenance, quarantine of instruction-shaped records and a stuffing check, on the table to show that every cell can be passed. Rows that rank by an embedder are measured with a real sentence embedder, never with the offline stand-in; each target's section gives the method and what is not measured. `docs/scorecard.md` is generated from the results file by the runner and checked in CI, so these tables and that file cannot drift apart.
+Each cell is five scenarios, and "(n of 5)" says how many the attacker won; a tool is kept out only when it wins none. Mem0's 0.1 floor kept one of the five stuffed entries out and served the other four; Letta, with no floor, also kept one out because four genuine memories outranked it on that fixture. The reference row at the bottom is not a product: it is the naive store plus provenance, quarantine of instruction-shaped records and a stuffing check, on the table to show that every cell can be passed. Rows that rank by an embedder are measured with a real sentence embedder, never with the offline stand-in; each target's section gives the method and what is not measured. `docs/scorecard.md` is generated from the results file by the runner and checked in CI, so these tables and that file cannot drift apart.
 
 ## Quick start
 
@@ -224,11 +225,13 @@ agmi/
     mem0_at_rest.py         Real Mem0 on its local Qdrant store, offline
     mem0_semantic.py        Real Mem0 through its own add/search paths, real embedder
     langgraph_store.py      Real LangGraph SqliteStore through put/search, real embedder
+    letta_archival.py       Real Letta archival memory through insert_passage/search, one agent per user
     inspeximus_recall.py    Real inspeximus through remember/recall, default configuration
     openfang.py             Python model of OpenFang's hash-chained audit log
     naive_memory.py         Deliberately undefended retrieval baseline
   checks.py                 The two text checks the verdicts and the defended reference share, in the open
   embedders.py              Hashing stand-in (offline) and all-MiniLM-L6-v2 (opt-in) for embedder-ranked rows
+  embedding_endpoint.py     Local OpenAI-compatible embeddings server, for tools that only embed over a network
   measure.py                One command that runs the memory-specific family on any target with provenance
   full_runner.py            Builds the matrix and prints the scorecard
 tests/                      One pinned test module per real target
@@ -308,6 +311,22 @@ Two facts about the store decide its row. It applies no relevance floor: a memor
 | verify() | True if Letta raises nothing during the full undo and redo walk |
 
 Letta's undo and redo are written to tolerate missing sequence numbers, so a holed or truncated history is invisible by design. After `truncate` the agent's core memory silently rewinds two checkpoints and every call succeeds. After `forge` the agent's core memory is the attacker's text.
+
+### Letta archival memory
+
+Letta has two memories and they get two rows. Core memory, the blocks an agent edits, does not search and is measured at rest above. Archival memory is the long-term store an agent writes facts into with `archival_memory_insert` and searches by meaning with `archival_memory_search`; it is the surface for the memory-specific attacks.
+
+| | |
+|---|---|
+| Measured on | letta 0.16.8, one agent per user, embeddings served to Letta's `openai` provider by a local OpenAI-compatible endpoint (`agmi/embedding_endpoint.py`) running all-MiniLM-L6-v2 via sentence-transformers 6.1.0, macOS arm64, Python 3.12 |
+| Written through | `PassageManager.insert_passage(agent_state, text, actor)`, what the `archival_memory_insert` tool calls; the text is stored as given |
+| Read through | `AgentManager.search_agent_archival_memory_async(agent_id, query, top_k)`, what the `archival_memory_search` tool calls, every other parameter at its default |
+| Verdict | what the search returns, untouched. Letta returns no score with a hit, so ranks are Letta's order |
+| Not measured | any Letta reranking or filtering an operator might add; the default path only |
+
+Two facts about letta 0.16.8 decide the row. Its archival search applies no relevance floor: a memory sharing nothing with the query still comes back. And archives are per agent, so a query through one agent never sees another agent's passages; with one agent per user, isolation holds by construction, as it does for LangGraph's store, and the guarantee sits in how agents are assigned rather than in a filter over a shared pool. Both facts are pinned in `tests/test_letta_archival.py`. Letta only embeds through a network provider, which is why the adapter serves the embedder over a local endpoint; nothing about Letta's storage or search is replaced, only where the vectors come from.
+
+The adapter is `agmi/adapters/letta_archival.py`; `python -m agmi.measure --target letta-archival --embedder minilm` reproduces the row.
 
 ### Mem0 local Qdrant store
 
@@ -441,6 +460,7 @@ The five at-rest edits come from the tamper-evidence literature on append-only l
 ## Scope, and what is not measured
 
 - Measured on Linux (CI) and macOS (the maintainer's machine), Python 3.11 and 3.12. Windows is untested; Letta's embedded Postgres in particular has not been tried there.
+- Letta's archival row models one user as one agent, which is how Letta separates users; a deployment that shares one agent between users has no isolation to measure.
 - Fixtures are in English. A tokenizer or lexical ranker may behave differently on other scripts; non-English fixtures are later work.
 - Mem0's published row uses `infer=False`. Its default `infer=True` mode, where a hosted model extracts facts before storage, is a separate opt-in tier (`--target mem0-live`) that needs a real key; it is measured and published only with the model and date named.
 - The hidden-instruction cell measures delivery into context, not whether a model obeys.
@@ -453,7 +473,7 @@ The five at-rest edits come from the tamper-evidence literature on append-only l
 |---|---|---|
 | 0.1 | Attack catalogue, adapter interface, OpenFang model, naive baseline | done |
 | 0.2 to 0.5 | Real at-rest measurements for LangGraph, Letta and Mem0; licensing; CI | done |
-| 0.6 | Memory-specific attacks on real retrieval tools with real embedders (Mem0, LangGraph store and inspeximus measured; Letta archival and Graphiti next) | in progress |
+| 0.6 | Memory-specific attacks on real retrieval tools with real embedders (Mem0, LangGraph store, inspeximus and Letta archival measured; Graphiti next, then the 0.6.0 tag) | in progress |
 | 0.7 | Deserialization safety: crafted stored payloads that execute on load. Both LangGraph and Mem0 still unpickle from their stores, and one has patched a version of this before | planned |
 | 0.8 | In-flow attacks: replay, cross-thread poison, rollback during execution | planned |
 | 0.9 | Reference integrity layer: a hash chain in checkpoint metadata, offered upstream as an optional mode | planned |

@@ -53,6 +53,12 @@ markers = [
 # The default run is the offline suite. Tests that need a downloaded model
 # or a hosted key are opted into with `pytest -m embedder` / `pytest -m live`.
 addopts = "-m 'not embedder and not live'"
+# Deprecation notices raised inside the tools under test are theirs, not
+# agmi's; they would otherwise bury the test output.
+filterwarnings = [
+    "ignore::DeprecationWarning:letta.*",
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20",
+]
 
 [tool.ruff]
 line-length = 120

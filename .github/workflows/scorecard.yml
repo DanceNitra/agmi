@@ -64,7 +64,7 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev,mem0,langgraph,embedder]"
+          pip install -e ".[dev,mem0,langgraph,letta,embedder]"
       - name: Embedder-tier tests
         env:
           PYTHONPATH: .
@@ -77,3 +77,4 @@ jobs:
         run: |
           python -m agmi.measure --target mem0 --embedder minilm 2>/dev/null
           python -m agmi.measure --target langgraph-store --embedder minilm 2>/dev/null
+          python -m agmi.measure --target letta-archival --embedder minilm 2>/dev/null

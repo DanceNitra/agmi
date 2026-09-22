@@ -87,10 +87,25 @@ def _langgraph_store_semantic():
         return None
 
 
+def _letta_archival_semantic():
+    """The Letta archival row, or None: same rule as the Mem0 and LangGraph
+    store rows, a real sentence embedder or no row."""
+    try:
+        from agmi.adapters.letta_block_history import _ensure_env
+        _ensure_env()  # before letta is imported anywhere
+        from agmi.adapters.letta_archival import LettaArchivalAdapter
+        from agmi.embedders import SentenceTransformerEmbedder
+        import letta  # noqa: F401
+        return LettaArchivalAdapter(SentenceTransformerEmbedder())
+    except (ImportError, NotImplementedError, OSError):
+        return None
+
+
 def full_scorecard() -> str:
     from agmi.adapters.openfang import OpenFangAdapter
     from agmi.adapters.langgraph_sqlite import LangGraphSqliteAdapter
     lg_store = _langgraph_store_semantic()
+    letta_archival = _letta_archival_semantic()
     try:
         from agmi.adapters.mem0_at_rest import Mem0AtRestAdapter
         mem0_row = ("mem0-qdrant-local", Mem0AtRestAdapter(), _mem0_semantic())
@@ -129,6 +144,7 @@ def full_scorecard() -> str:
         ("langgraph-sqlite", LangGraphSqliteAdapter(), None),
         *([("langgraph-sqlite-store", None, lg_store)] if lg_store else []),
         *([letta_row] if letta_row else []),
+        *([("letta-archival", None, letta_archival)] if letta_archival else []),
         *([mem0_row] if mem0_row else []),
         *inspeximus_rows,
         ("naive-mem(scoped)", None,
