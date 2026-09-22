@@ -71,6 +71,23 @@ def _inspeximus(embedder: str):
     return InspeximusRecallAdapter()
 
 
+def _inspeximus_defended(embedder: str):
+    """inspeximus with the tool's own provenance and a trust root.
+
+    One configuration row, not a second target: the store records the
+    channel each memory arrived on as its ``source``, trusts the
+    first-party channel as a root, and ``recall(trusted_only=True)``
+    serves only what is reachable from that root. The defence is
+    conditional on the label being assigned by the caller: an attacker
+    who can write ``source="user"`` gets the default row back.
+    """
+    from agmi.adapters.inspeximus_recall import InspeximusRecallAdapter
+    from inspeximus import Inspeximus
+    return InspeximusRecallAdapter(
+        provenance=True, trust_seeds={Inspeximus._canon_source("user")},
+        recall_kwargs={"trusted_only": True}, label="inspeximus-defended")
+
+
 def _mem0_live(embedder: str):
     """Mem0 with ``infer=True``: its default mode, where a hosted model
     extracts facts before storage. Needs a real OPENAI_API_KEY."""
@@ -88,6 +105,7 @@ TARGETS: dict[str, Callable[[str], SemanticMemoryAdapter]] = {
     "langgraph-store": _langgraph_store,
     "letta-archival": _letta_archival,
     "inspeximus": _inspeximus,
+    "inspeximus-defended": _inspeximus_defended,
 }
 
 
