@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+- CI, installing the newest inspeximus (3.5.2), showed the hijack cell
+  move: the stuffed entry is kept out on 4 of 5 fixtures and the hidden
+  instruction on 3 of 5. Statuses unchanged (a tool is kept out only when
+  it wins none); fixture-level detail is now pinned only on the version it
+  was measured on, statuses on every version. Recorded in the README.
 - Measurement robustness and process, from the same audit:
   - A second real embedder (`bge-small`, BAAI/bge-small-en-v1.5) for every
     rank-dependent cell, and a scale tier (`--scale N`) that seeds N
