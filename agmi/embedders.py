@@ -89,6 +89,7 @@ class HashEmbedder:
 
 
 MINILM_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+BGE_SMALL_MODEL = "BAAI/bge-small-en-v1.5"
 
 
 class SentenceTransformerEmbedder:
@@ -140,14 +141,25 @@ class SentenceTransformerEmbedder:
                 f"{sentence_transformers.__version__}")
 
 
+class BgeSmallEmbedder(SentenceTransformerEmbedder):
+    """A second real sentence embedder, from a different family, so a rank
+    on the scorecard can be shown to hold under more than one model."""
+
+    name = "bge-small"
+
+    def __init__(self, device: str = "cpu"):
+        super().__init__(model_id=BGE_SMALL_MODEL, device=device)
+
+
 EMBEDDERS: dict[str, type] = {
     HashEmbedder.name: HashEmbedder,
     SentenceTransformerEmbedder.name: SentenceTransformerEmbedder,
+    BgeSmallEmbedder.name: BgeSmallEmbedder,
 }
 
 
 def get_embedder(name: str) -> Embedder:
-    """Build an embedder by its short name ("hash" or "minilm")."""
+    """Build an embedder by its short name ("hash", "minilm", "bge-small")."""
     try:
         cls = EMBEDDERS[name]
     except KeyError:

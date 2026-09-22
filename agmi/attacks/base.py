@@ -39,6 +39,10 @@ class AttackResult:
     detected: bool
     detail: str = ""
     error: str | None = None
+    #: Version of the attack definition that produced this result. Bumped
+    #: whenever a fixture or verdict rule changes, so cells from different
+    #: reports are never compared as if the attack had stood still.
+    version: int = 1
 
     @property
     def status(self) -> str:
@@ -57,6 +61,9 @@ class Attack(ABC):
 
     #: How many legitimate entries to seed before attacking.
     seed_count: int = 5
+    #: Attack definition version. Bump when the fixture or the verdict rule
+    #: changes; results and reports carry it.
+    version: int = 1
 
     def run(self, adapter: MemoryAdapter) -> AttackResult:
         """Full attack lifecycle against one adapter. Never raises: any
@@ -65,22 +72,38 @@ class Attack(ABC):
         try:
             adapter.setup()
             adapter.seed(self.seed_count)
-            # Sanity: the clean store must verify OK, or the test is invalid.
+            # Control 1: the clean store must verify, or the test is invalid.
             if not adapter.verify():
                 return AttackResult(
                     self.name, adapter.name, detected=False,
                     error="clean store failed to verify before attack",
+                    version=self.version,
+                )
+            # Control 2: a reload with no edit must still verify. Without
+            # this, a tool that cannot reopen its own store (a lock, a
+            # flaky restart, a refusal of any reopened store) would score
+            # "detected" on every edit while detecting nothing.
+            adapter.reload()
+            if not adapter.verify():
+                return AttackResult(
+                    self.name, adapter.name, detected=False,
+                    error=("store failed to verify after a reload with no "
+                           "edit, so no verdict can be taken"
+                           + self._why(adapter)),
+                    version=self.version,
                 )
             self.tamper(adapter)
             adapter.reload()
             detected = not adapter.verify()
             return AttackResult(
                 self.name, adapter.name, detected=detected,
-                detail=self.detail_on(detected),
+                detail=self.detail_on(detected) + (self._why(adapter) if detected else ""),
+                version=self.version,
             )
         except Exception as exc:  # noqa: BLE001 - deliberately broad
             return AttackResult(
                 self.name, adapter.name, detected=False, error=str(exc),
+                version=self.version,
             )
         finally:
             try:
@@ -94,3 +117,10 @@ class Attack(ABC):
 
     def detail_on(self, detected: bool) -> str:
         return "detected on reload" if detected else "accepted silently"
+
+    @staticmethod
+    def _why(adapter: MemoryAdapter) -> str:
+        """The adapter's own account of why verify() said no, so a reader
+        can tell a deliberate integrity refusal from an incidental crash."""
+        why = getattr(adapter, "verify_detail", None)
+        return f" ({why})" if why else ""

@@ -83,14 +83,22 @@ class InspeximusRecallAdapter(SemanticMemoryAdapter):
     embed:
         Optional ``fn(str) -> list[float]`` handed to the store. Unused by
         the default row (see the module docstring for why).
+    recall_kwargs:
+        Extra keyword arguments passed to every ``recall`` call, for
+        scoring one of the tool's opt-in levers (``trusted_only``,
+        ``prefer_trust``, ``rerank``, ``mmr``) as its own configuration row.
+        Nothing else about the adapter changes, so a lever row differs from
+        the default row by exactly that argument.
     label:
         Scorecard row name. Defaults to ``LABEL``.
     """
 
     def __init__(self, mode: str = "auto", embed=None,
+                 recall_kwargs: dict | None = None,
                  label: str | None = None):
         self.mode = mode
         self.embed = embed
+        self.recall_kwargs = dict(recall_kwargs or {})
         self.name = label or LABEL
         self._dir: tempfile.TemporaryDirectory | None = None
         self._store = None
@@ -130,14 +138,13 @@ class InspeximusRecallAdapter(SemanticMemoryAdapter):
 
     # --- the tool's own write and read paths ---------------------------
     def add_memory(self, item: MemoryItem) -> None:
-        kwargs = {"user_id": item.user_id}
-        if item.metadata:
-            kwargs["meta"] = dict(item.metadata)
-        self._memory().remember(item.text, **kwargs)
+        meta = dict(item.metadata)
+        meta.setdefault("source", item.source)
+        self._memory().remember(item.text, user_id=item.user_id, meta=meta)
 
     def retrieve(self, query: str, user_id: str, k: int = 5) -> list[Retrieved]:
         rows = self._memory().recall(query, k=k, user_id=user_id,
-                                     mode=self.mode)
+                                     mode=self.mode, **self.recall_kwargs)
         out: list[Retrieved] = []
         for row in rows or []:
             score = row.get("score")
@@ -158,7 +165,9 @@ class InspeximusRecallAdapter(SemanticMemoryAdapter):
         """One line stating what this row was produced with."""
         ranking = ("lexical token overlap; mode=auto stays lexical below "
                    "300 memories" if self.mode == "auto" else f"mode={self.mode}")
+        levers = (", " + ", ".join(f"{k}={v!r}" for k, v in self.recall_kwargs.items())
+                  if self.recall_kwargs else "")
         return (f"inspeximus {inspeximus_version()}, receipts off, "
-                f"recall defaults ({ranking}), "
+                f"recall defaults ({ranking}){levers}, "
                 f"{platform.system()} {platform.machine()}, "
                 f"Python {sys.version_info.major}.{sys.version_info.minor}")

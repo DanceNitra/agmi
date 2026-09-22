@@ -32,18 +32,30 @@ COLLECTION = "agmi"
 DUMMY_OPENAI_KEY = "sk-agmi-offline-dummy"
 
 
-def open_local_memory(root: Path, embedder: Embedder):
+def open_local_memory(root: Path, embedder: Embedder, live: bool = False):
     """Construct a real ``mem0.Memory`` whose stores live under ``root``.
 
     ``embedder`` replaces Mem0's default (OpenAI) embedder after
     construction, so no network is needed and the Qdrant collection is
     created with ``embedder.dims`` as its vector width.
 
-    Raises ``NotImplementedError`` if mem0ai is not installed, which the
-    attacks score as ``n/a``.
+    ``live=True`` is for the ``infer=True`` tier: Mem0's own LLM (its
+    default OpenAI configuration) is left in place and a real
+    ``OPENAI_API_KEY`` must already be in the environment. Nothing is
+    substituted, so the row measures Mem0 as shipped.
+
+    Raises ``NotImplementedError`` if mem0ai is not installed, or if the
+    live tier is asked for without a key; the attacks score both ``n/a``.
     """
     os.environ.setdefault("MEM0_TELEMETRY", "false")
-    os.environ.setdefault("OPENAI_API_KEY", DUMMY_OPENAI_KEY)
+    if live:
+        key = os.environ.get("OPENAI_API_KEY", "")
+        if not key or key == DUMMY_OPENAI_KEY:
+            raise NotImplementedError(
+                "the infer=True tier needs a real OPENAI_API_KEY in the "
+                "environment; it is never measured with a stand-in")
+    else:
+        os.environ.setdefault("OPENAI_API_KEY", DUMMY_OPENAI_KEY)
     try:
         from mem0 import Memory
     except ImportError as exc:  # pragma: no cover - environment dependent

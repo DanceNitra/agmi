@@ -16,6 +16,7 @@ from agmi.adapters.inspeximus_recall import (  # noqa: E402
     InspeximusRecallAdapter, inspeximus_version,
 )
 from agmi.adapters.semantic_base import MemoryItem  # noqa: E402
+from agmi.attacks.memory_specific import EMPTY_READ_PATH  # noqa: E402
 from agmi.measure import run_memory_attacks  # noqa: E402
 
 MEASURED_ON = "inspeximus 3.0.0, 2026-09-21"
@@ -87,4 +88,14 @@ def test_row_matches_the_published_measurement():
         f"inspeximus's memory-specific row changed; re-measure and update "
         f"the scorecard {_now()}\n  published: {expected}\n  now:       {got}")
     hijack = next(r for r in results if r.attack == "retrieval_hijack")
-    assert "rank 1 of 3" in hijack.detail, hijack.detail
+    assert "ranks 1, 1, 1, 1, 1 of 3" in hijack.detail, hijack.detail
+
+
+def test_trusted_only_with_no_trust_seeds_earns_no_cell():
+    """The lever reads safe on all four only because it fails closed and
+    serves nothing, including the victim's own memory (issue #3). The
+    positive control turns that into n/a, not safe."""
+    with InspeximusRecallAdapter(recall_kwargs={"trusted_only": True}) as a:
+        results = run_memory_attacks(a)
+    assert {r.status for r in results} == {"n/a"}, [(r.attack, r.status) for r in results]
+    assert all(r.error.startswith(EMPTY_READ_PATH) for r in results)

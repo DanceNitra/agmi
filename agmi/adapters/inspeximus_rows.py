@@ -220,9 +220,12 @@ class InspeximusRowsAdapter(MemoryAdapter):
         self._store = self._open()
 
     def verify(self) -> bool:
+        self.verify_detail = None
         if not self.receipts:
             return self._read_path_ok()
-        ok, _problems = self._store.verify_writes(expected_pubkey=self._pk)
+        ok, problems = self._store.verify_writes(expected_pubkey=self._pk)
+        if not ok:
+            self.verify_detail = f"verify_writes: {str(problems)[:140]}"
         return bool(ok)
 
     def _read_path_ok(self) -> bool:
@@ -231,7 +234,8 @@ class InspeximusRowsAdapter(MemoryAdapter):
             _ = list(self._store.items)
             self._store.recall("limit", k=10)
             self._store.history("fact::0")
-        except Exception:  # noqa: BLE001 - a raise here is the tool refusing, which is detection
+        except Exception as exc:  # noqa: BLE001 - a raise here is the tool refusing, which is detection
+            self.verify_detail = f"{type(exc).__name__}: {exc}"[:160]
             return False
         return True
 

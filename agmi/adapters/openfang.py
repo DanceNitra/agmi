@@ -152,6 +152,7 @@ class OpenFangAdapter(MemoryAdapter):
         pass
 
     def verify(self) -> bool:
+        self.verify_detail = None
         conn = self._connect()
         rows = conn.execute(
             "SELECT seq, timestamp, agent_id, action, detail, outcome, "
@@ -166,10 +167,12 @@ class OpenFangAdapter(MemoryAdapter):
         for row in rows:
             seq, ts, agent, action, detail, outcome, prev_hash, h = row
             if prev_hash != expected_prev:
+                self.verify_detail = f"chain break at seq {seq}"
                 return False  # chain break (catches reorder, delete-middle)
             recomputed = _entry_hash(seq, ts, agent, action, detail,
                                      outcome, prev_hash)
             if recomputed != h:
+                self.verify_detail = f"hash mismatch at seq {seq}"
                 return False  # content or forgery mismatch
             expected_prev = h
 
@@ -177,6 +180,7 @@ class OpenFangAdapter(MemoryAdapter):
             # Post-fix behaviour: the walked tip must match the persisted tip.
             walked_tip = rows[-1][7] if rows else GENESIS
             if walked_tip != stored_tip[0]:
+                self.verify_detail = "walked tip differs from persisted tip"
                 return False  # catches truncation
 
         return True

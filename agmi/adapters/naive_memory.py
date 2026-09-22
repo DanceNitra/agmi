@@ -55,3 +55,6 @@ class NaiveMemoryAdapter(SemanticMemoryAdapter):
         scored.sort(key=lambda s: s[0], reverse=True)
         return [Retrieved(text=i.text, user_id=i.user_id, score=s)
                 for s, i in scored[:k]]
+
+    def measured_on(self) -> str:
+        return "reference store, token-overlap ranking, no defences"

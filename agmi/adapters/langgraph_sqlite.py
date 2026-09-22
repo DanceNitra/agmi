@@ -188,12 +188,15 @@ class LangGraphSqliteAdapter(MemoryAdapter):
 
     def verify(self) -> bool:
         cfg = {"configurable": {"thread_id": THREAD}}
+        self.verify_detail = None
         try:
             latest = self._saver.get(cfg)
             if latest is None:
+                self.verify_detail = "get() returned no checkpoint"
                 return False
             # Force a full walk so any undecodable row surfaces.
             list(self._saver.list(cfg))
             return True
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            self.verify_detail = f"{type(exc).__name__}: {exc}"[:160]
             return False

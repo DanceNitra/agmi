@@ -23,11 +23,19 @@ from dataclasses import dataclass, field
 
 @dataclass
 class MemoryItem:
-    """One semantic memory as an agent tool stores it."""
+    """One semantic memory as an agent tool stores it.
+
+    ``source`` names the channel the memory arrived on: "user" for
+    something the user said, "external" for content the agent read (a web
+    page, an email, a tool result). Adapters pass it to the tool as
+    metadata where the tool accepts any; a tool that keeps provenance can
+    act on it, and most do not, which is the finding.
+    """
 
     text: str
     user_id: str
     metadata: dict = field(default_factory=dict)
+    source: str = "user"
 
 
 @dataclass
@@ -70,3 +78,13 @@ class SemanticMemoryAdapter(ABC):
         """Whether the tool scopes memory per user. Tools that don't cannot
         be tested for cross-session bleed."""
         return True
+
+    def close(self) -> None:
+        """Release anything the adapter holds. The runner calls this after
+        the last attack. Default: nothing to release."""
+
+    def measured_on(self) -> str:
+        """One line naming what a row was produced with: library version,
+        embedder, which of the tool's optional features were on. Printed
+        next to the row. Default says the adapter did not record it."""
+        return "not recorded by this adapter"

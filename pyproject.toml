@@ -19,7 +19,7 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "ruff"]
 langgraph = ["langgraph-checkpoint-sqlite"]
 letta = ["letta", "asyncpg", "psycopg2-binary", "pgvector", "pgserver"]
 mem0 = ["mem0ai", "qdrant-client"]
@@ -40,11 +40,25 @@ Issues = "https://github.com/tech4biz-yasha/agmi/issues"
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+# Only the library is a package. docs/, results/ and tests/ sit beside it.
+include = ["agmi*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
     "embedder: needs sentence-transformers and a cached all-MiniLM-L6-v2; run with: pytest -m embedder",
+    "live: needs a real hosted-model key (OPENAI_API_KEY); run with: pytest -m live",
 ]
 # The default run is the offline suite. Tests that need a downloaded model
-# are opted into with `pytest -m embedder`.
-addopts = "-m 'not embedder'"
+# or a hosted key are opted into with `pytest -m embedder` / `pytest -m live`.
+addopts = "-m 'not embedder and not live'"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+# Correctness only: undefined names, unused imports, syntax. Style stays
+# the contributor's; the point is that a broken adapter cannot land.
+select = ["E4", "E7", "E9", "F"]

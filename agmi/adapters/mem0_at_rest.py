@@ -166,15 +166,18 @@ class Mem0AtRestAdapter(MemoryAdapter):
         self._mem = self._open()
 
     def verify(self) -> bool:
+        self.verify_detail = None
         try:
             res = self._mem.get_all(filters={"user_id": USER})
             items = res["results"] if isinstance(res, dict) else res
             if not items:
+                self.verify_detail = "get_all() returned no memories"
                 return False
             self._mem.search("note about topic", filters={"user_id": USER},
                              limit=5)
             for it in items:
                 self._mem.history(it["id"])
             return True
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            self.verify_detail = f"{type(exc).__name__}: {exc}"[:160]
             return False

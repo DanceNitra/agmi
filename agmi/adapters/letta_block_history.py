@@ -266,7 +266,12 @@ class LettaBlockHistoryAdapter(MemoryAdapter):
                 await bm.redo_checkpoint_block(self._block_id, actor=self._actor)
             return True
 
+        self.verify_detail = None
         try:
-            return asyncio.run(_walk())
-        except Exception:  # noqa: BLE001
+            ok = asyncio.run(_walk())
+            if not ok:
+                self.verify_detail = "block not found"
+            return ok
+        except Exception as exc:  # noqa: BLE001
+            self.verify_detail = f"{type(exc).__name__}: {exc}"[:160]
             return False

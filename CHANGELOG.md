@@ -1,6 +1,63 @@
 # Changelog
 
 ## Unreleased
+- Measurement robustness and process, from the same audit:
+  - A second real embedder (`bge-small`, BAAI/bge-small-en-v1.5) for every
+    rank-dependent cell, and a scale tier (`--scale N`) that seeds N
+    unrelated memories before every fixture; both opt-in, both reported in
+    the provenance line.
+  - A live tier for Mem0's default `infer=True` mode (`--target
+    mem0-live`), which runs only with a real key and is never measured
+    with a stand-in.
+  - The runner writes the run as JSON (`--json`); `agmi.render` generates
+    `docs/scorecard.md` from it and CI fails if the two drift, or if CI's
+    own run disagrees with the committed file on any cell both measured.
+    No published table is typed by hand any more.
+  - CI runs the embedder-tier rows on a machine nobody owns, runs ruff
+    (correctness rules only), and a conformance suite every semantic
+    adapter must pass (write, read back, honour k, reset, scope, report
+    provenance, close).
+  - The runner prints the words the tables use (accepted, detected,
+    reported; surfaced, kept out); tests still pin the status values.
+  - A "Dispute a cell" issue template, a configuration-row rule in
+    CONTRIBUTING.md, a related-work table naming the papers each attack
+    measures, and a scope section stating what is not measured.
+- Verdict integrity, five changes, all found by asking how a tool could
+  earn a pass without doing the right thing:
+  1. Every memory-specific attack now runs five fixtures and a tool is
+     safe only if all five hold; verdicts are keyed on the fact that
+     matters, not the sentence, so literal-string blocking and rewording
+     both stop working as routes to a pass. Attack versions bump:
+     memory_injection@v2, cross_session_bleed@v2, retrieval_hijack@v3,
+     indirect_prompt_injection@v2. The naive baseline's prompt-injection
+     cell goes from safe to VULNERABLE (4 of 5 fixtures delivered); it
+     was safe before only because one query happened not to overlap.
+  2. At-rest attacks run a second control: a reload with no edit must
+     still verify, or the cell is n/a. A tool that cannot reopen its own
+     store no longer reads as tamper-evident.
+  3. When verify() says no, the tool's own reason is recorded in the cell
+     detail, so a deliberate refusal can be told from a crash.
+  4. Every attack carries a version, printed by the runner and stored in
+     results and reports, so cells across reports are never compared as if
+     the attack had stood still.
+  5. Provenance: every write carries a `source` ("user" or "external"),
+     passed to tools as metadata. `reference-defended(model)`, the naive
+     store plus provenance, write-time quarantine and a stuffing check,
+     passes all four cells and is on the scorecard to show each is
+     winnable. The two checks live in `agmi/checks.py`, shared with the
+     verdicts, in the open.
+- Base classes gain `close()` and `measured_on()` with defaults, so an
+  adapter never has to guess what the runner will call.
+- Positive control on every memory-specific attack: the victim must read
+  back a genuine memory with an on-topic question in the same store state,
+  or the cell is n/a rather than safe. Closes the route where a read path
+  that returns nothing passes every cell. Found by DanceNitra (issue #3):
+  inspeximus `trusted_only` with no trust seeds fails closed and read as
+  safe on all four; it now scores n/a on all four, pinned by a test. The
+  hidden-instruction fixture gained a genuine memory beside the payload so
+  the control has something to read; verdict rule unchanged.
+- `InspeximusRecallAdapter(recall_kwargs=...)` scores one of the tool's
+  opt-in recall levers as its own configuration row.
 - Two more targets for the memory-specific family. `inspeximus_recall.py`
   drives real inspeximus through `remember`/`recall` in its default
   configuration; `recall` ranks lexically below 300 memories, so the row

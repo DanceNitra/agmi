@@ -1,0 +1,589 @@
+{
+  "date": "2026-09-22",
+  "platform": "Darwin arm64, Python 3.12",
+  "attack_versions": {
+    "tamper": 1,
+    "truncate": 1,
+    "delete_middle": 1,
+    "reorder": 1,
+    "forge": 1,
+    "memory_injection": 2,
+    "cross_session_bleed": 2,
+    "retrieval_hijack": 3,
+    "indirect_prompt_injection": 2
+  },
+  "rows": [
+    {
+      "label": "openfang(model,fixed)",
+      "checked_at": "read",
+      "measured_on": null,
+      "cells": {
+        "tamper": {
+          "status": "safe",
+          "verdict": "detected",
+          "detail": "detected on reload (hash mismatch at seq 2)"
+        },
+        "truncate": {
+          "status": "safe",
+          "verdict": "detected",
+          "detail": "detected on reload (walked tip differs from persisted tip)"
+        },
+        "delete_middle": {
+          "status": "safe",
+          "verdict": "detected",
+          "detail": "detected on reload (chain break at seq 3)"
+        },
+        "reorder": {
+          "status": "safe",
+          "verdict": "detected",
+          "detail": "detected on reload (chain break at seq 1)"
+        },
+        "forge": {
+          "status": "safe",
+          "verdict": "detected",
+          "detail": "detected on reload (chain break at seq 5)"
+        },
+        "memory_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "cross_session_bleed": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "retrieval_hijack": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "indirect_prompt_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "label": "langgraph-sqlite",
+      "checked_at": "read",
+      "measured_on": null,
+      "cells": {
+        "tamper": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "truncate": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "delete_middle": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "reorder": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "forge": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "memory_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "cross_session_bleed": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "retrieval_hijack": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "indirect_prompt_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "label": "langgraph-sqlite-store",
+      "checked_at": null,
+      "measured_on": "langgraph-checkpoint-sqlite 3.1.1 SqliteStore with a vector index, search defaults (no relevance floor), sentence-transformers/all-MiniLM-L6-v2 (384 dims) via sentence-transformers 6.1.0, Darwin arm64, Python 3.12",
+      "cells": {
+        "tamper": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "truncate": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "delete_middle": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "reorder": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "forge": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "memory_injection": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "planted memory served as trusted fact in 5 of 5 fixtures"
+        },
+        "cross_session_bleed": {
+          "status": "safe",
+          "verdict": "kept out",
+          "detail": "user boundary held in 5 of 5 fixtures"
+        },
+        "retrieval_hijack": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "attacker entry took a slot from a genuine memory in 5 of 5 fixtures (ranks 3, 3, 1, 3, 2 of 3)"
+        },
+        "indirect_prompt_injection": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "instruction-shaped content delivered into context in 5 of 5 fixtures"
+        }
+      }
+    },
+    {
+      "label": "letta-block-history",
+      "checked_at": "read",
+      "measured_on": null,
+      "cells": {
+        "tamper": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "truncate": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "delete_middle": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "reorder": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "forge": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "memory_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "cross_session_bleed": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "retrieval_hijack": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "indirect_prompt_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "label": "mem0-qdrant-local",
+      "checked_at": "read",
+      "measured_on": "mem0ai 2.0.20, infer=False, default search (semantic only, no keyword or entity boosts), sentence-transformers/all-MiniLM-L6-v2 (384 dims) via sentence-transformers 6.1.0, Darwin arm64, Python 3.12",
+      "cells": {
+        "tamper": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "truncate": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "delete_middle": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "reorder": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "forge": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "memory_injection": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "planted memory served as trusted fact in 5 of 5 fixtures"
+        },
+        "cross_session_bleed": {
+          "status": "safe",
+          "verdict": "kept out",
+          "detail": "user boundary held in 5 of 5 fixtures"
+        },
+        "retrieval_hijack": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "attacker entry took a slot from a genuine memory in 4 of 5 fixtures (ranks 2, 2, 1, out, 3 of 3)"
+        },
+        "indirect_prompt_injection": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "instruction-shaped content delivered into context in 5 of 5 fixtures"
+        }
+      }
+    },
+    {
+      "label": "inspeximus-default",
+      "checked_at": "read",
+      "measured_on": "inspeximus 3.0.0, receipts off, recall defaults (lexical token overlap; mode=auto stays lexical below 300 memories), Darwin arm64, Python 3.12",
+      "cells": {
+        "tamper": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "truncate": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "delete_middle": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "reorder": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "forge": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "memory_injection": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "planted memory served as trusted fact in 5 of 5 fixtures"
+        },
+        "cross_session_bleed": {
+          "status": "safe",
+          "verdict": "kept out",
+          "detail": "user boundary held in 5 of 5 fixtures"
+        },
+        "retrieval_hijack": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "attacker entry took a slot from a genuine memory in 5 of 5 fixtures (ranks 1, 1, 1, 1, 1 of 3)"
+        },
+        "indirect_prompt_injection": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "instruction-shaped content delivered into context in 5 of 5 fixtures"
+        }
+      }
+    },
+    {
+      "label": "inspeximus-rcpt+dir",
+      "checked_at": "audit",
+      "measured_on": null,
+      "cells": {
+        "tamper": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: ['memory c2d0afd19a: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
+        },
+        "truncate": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: ['write log shrank below the head kept outside the store: 3 < 5 (rolled back or truncated, receipts included); a deliberate restore is accep)"
+        },
+        "delete_middle": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: ['receipt 2: broken chain link (a prior receipt was altered/removed)', 'write log shrank below the head kept outside the store: 4 < 5 (rolle)"
+        },
+        "reorder": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: ['memory 1ea9de5fc7: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+        },
+        "forge": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0ca0acf41']. They were inserted out of band, or written )"
+        },
+        "memory_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "cross_session_bleed": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "retrieval_hijack": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "indirect_prompt_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "label": "inspeximus-rcpt+dir+home",
+      "checked_at": "audit",
+      "measured_on": null,
+      "cells": {
+        "tamper": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: ['memory f07d1cd54f: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
+        },
+        "truncate": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "delete_middle": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: ['receipt 2: broken chain link (a prior receipt was altered/removed)'])"
+        },
+        "reorder": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: ['memory ef274e8534: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+        },
+        "forge": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0c03a181e']. They were inserted out of band, or written )"
+        },
+        "memory_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "cross_session_bleed": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "retrieval_hijack": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "indirect_prompt_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "label": "naive-mem(scoped)",
+      "checked_at": null,
+      "measured_on": "reference store, token-overlap ranking, no defences",
+      "cells": {
+        "tamper": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "truncate": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "delete_middle": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "reorder": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "forge": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "memory_injection": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "planted memory served as trusted fact in 5 of 5 fixtures"
+        },
+        "cross_session_bleed": {
+          "status": "safe",
+          "verdict": "kept out",
+          "detail": "user boundary held in 5 of 5 fixtures"
+        },
+        "retrieval_hijack": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "attacker entry took a slot from a genuine memory in 5 of 5 fixtures (ranks 1, 1, 1, 1, 1 of 3)"
+        },
+        "indirect_prompt_injection": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "instruction-shaped content delivered into context in 4 of 5 fixtures"
+        }
+      }
+    },
+    {
+      "label": "naive-mem(unscoped)",
+      "checked_at": null,
+      "measured_on": "reference store, token-overlap ranking, no defences",
+      "cells": {
+        "tamper": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "truncate": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "delete_middle": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "reorder": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "forge": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "memory_injection": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "planted memory served as trusted fact in 5 of 5 fixtures"
+        },
+        "cross_session_bleed": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "user A memory served to user B in 5 of 5 fixtures"
+        },
+        "retrieval_hijack": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "attacker entry took a slot from a genuine memory in 5 of 5 fixtures (ranks 1, 1, 1, 1, 1 of 3)"
+        },
+        "indirect_prompt_injection": {
+          "status": "VULNERABLE",
+          "verdict": "surfaced",
+          "detail": "instruction-shaped content delivered into context in 4 of 5 fixtures"
+        }
+      }
+    },
+    {
+      "label": "reference-defended(model)",
+      "checked_at": null,
+      "measured_on": "reference store with provenance, write-time quarantine of instruction-shaped records and a stuffing check; token-overlap ranking",
+      "cells": {
+        "tamper": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "truncate": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "delete_middle": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "reorder": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "forge": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "memory_injection": {
+          "status": "safe",
+          "verdict": "kept out",
+          "detail": "planted memory kept out of trusted retrieval in 5 of 5 fixtures"
+        },
+        "cross_session_bleed": {
+          "status": "safe",
+          "verdict": "kept out",
+          "detail": "user boundary held in 5 of 5 fixtures"
+        },
+        "retrieval_hijack": {
+          "status": "safe",
+          "verdict": "kept out",
+          "detail": "every slot went to a genuine memory in 5 of 5 fixtures"
+        },
+        "indirect_prompt_injection": {
+          "status": "safe",
+          "verdict": "kept out",
+          "detail": "no instruction reached context in 5 of 5 fixtures"
+        }
+      }
+    }
+  ]
+}

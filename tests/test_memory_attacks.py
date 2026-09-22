@@ -11,53 +11,103 @@ simple to deliver instruction markers for a paraphrased query (a weak
 'safe' that only becomes meaningful against real vector tools).
 """
 
+from agmi.adapters.defended_memory import DefendedMemoryAdapter
 from agmi.adapters.naive_memory import NaiveMemoryAdapter
 from agmi.attacks.memory_specific import (
+    ALL_MEMORY_ATTACKS, EMPTY_READ_PATH, HIJACK_FIXTURES,
     HIJACK_ENTRY, HIJACK_GENUINE, HIJACK_K, HIJACK_QUERY,
     MemoryInjectionAttack, CrossSessionBleedAttack,
     RetrievalHijackAttack, IndirectPromptInjectionAttack,
 )
 
 
-def test_injection_always_hits_unprotected_store():
+class SilentAdapter(NaiveMemoryAdapter):
+    """A store that accepts every write and answers every read with nothing.
+    Models a configuration that fails closed (inspeximus ``trusted_only``
+    with no trust seeds, issue #3). It must earn no safe cell."""
+
+    def __init__(self):
+        super().__init__()
+        self.name = "silent"
+
+    def retrieve(self, query, user_id, k=5):
+        return []
+
+
+def test_injection_always_surfaces_on_a_store_with_no_provenance():
     r = MemoryInjectionAttack().run(NaiveMemoryAdapter())
-    assert r.safe is False
     assert r.error is None
-
-
-def test_bleed_blocked_when_scoped():
-    r = CrossSessionBleedAttack().run(
-        NaiveMemoryAdapter(enforce_user_scope=True))
-    assert r.safe is True
-
-
-def test_bleed_leaks_when_unscoped():
-    r = CrossSessionBleedAttack().run(
-        NaiveMemoryAdapter(enforce_user_scope=False))
     assert r.safe is False
-    assert "leaked" in r.detail
+    assert "5 of 5" in r.detail
 
 
-def test_memory_attacks_never_error_on_naive():
-    for scope in (True, False):
-        a = NaiveMemoryAdapter(enforce_user_scope=scope)
-        for cls in (MemoryInjectionAttack, CrossSessionBleedAttack,
-                    RetrievalHijackAttack, IndirectPromptInjectionAttack):
-            assert cls().run(a).error is None
+def test_bleed_is_decided_by_user_scoping():
+    assert CrossSessionBleedAttack().run(NaiveMemoryAdapter()).safe is True
+    assert CrossSessionBleedAttack().run(
+        NaiveMemoryAdapter(enforce_user_scope=False)).safe is False
 
 
 def test_hijack_set_up_makes_the_top_k_contested():
-    """The attack only means something if a slot taken by the attacker is a
-    slot taken from a genuine memory, and if the attacker did not simply
-    store the question."""
-    assert len(HIJACK_GENUINE) > HIJACK_K
-    assert HIJACK_QUERY not in HIJACK_ENTRY
-    assert "PAYLOAD" in HIJACK_ENTRY
-    assert not any("PAYLOAD" in g for g in HIJACK_GENUINE)
+    """Every fixture: more genuine memories than slots, the payload marker
+    only in the attacker's entry, and the question never a substring of
+    the entry."""
+    for fx in HIJACK_FIXTURES:
+        assert len(fx.genuine) > HIJACK_K
+        assert fx.query not in fx.entry
+        assert fx.key in fx.entry
+        assert not any(fx.key in g for g in fx.genuine)
+    assert HIJACK_ENTRY == HIJACK_FIXTURES[0].entry
+    assert HIJACK_GENUINE == list(HIJACK_FIXTURES[0].genuine)
+    assert HIJACK_QUERY == HIJACK_FIXTURES[0].query
 
 
 def test_hijack_outranks_genuine_memories_on_a_plain_ranker():
     r = RetrievalHijackAttack().run(NaiveMemoryAdapter())
     assert r.error is None
     assert r.safe is False
-    assert "rank 1 of 3" in r.detail
+    assert "ranks 1, 1, 1, 1, 1 of 3" in r.detail
+
+
+def test_prompt_injection_is_delivered_by_a_plain_ranker():
+    """The naive store serves whatever overlaps the question. On the first
+    fixture the query and the payload share no token ("meetings" versus
+    "meeting"), so that one is kept out; four of five are delivered."""
+    r = IndirectPromptInjectionAttack().run(NaiveMemoryAdapter())
+    assert r.error is None
+    assert r.safe is False
+    assert "4 of 5" in r.detail
+
+
+def test_a_silent_read_path_earns_no_safe_cell():
+    """Silence satisfies "not surfaced", "not leaked" and "not delivered".
+    The positive control turns that into n/a on every attack."""
+    for cls in ALL_MEMORY_ATTACKS:
+        r = cls().run(SilentAdapter())
+        assert r.status == "n/a", f"{r.attack} scored {r.status} on a silent store"
+        assert r.error.startswith(EMPTY_READ_PATH)
+
+
+def test_positive_control_passes_on_a_working_store():
+    """The control must not turn a real measurement into n/a."""
+    for cls in ALL_MEMORY_ATTACKS:
+        r = cls().run(NaiveMemoryAdapter())
+        assert r.error is None, f"{r.attack}: {r.error}"
+
+
+def test_every_cell_is_winnable_by_the_defended_reference():
+    """A benchmark nobody can pass proves nothing. The reference store with
+    provenance, write-time quarantine and a stuffing check keeps every
+    attacker memory out on every fixture, and still serves the genuine
+    ones (the positive control passes)."""
+    for cls in ALL_MEMORY_ATTACKS:
+        r = cls().run(DefendedMemoryAdapter())
+        assert r.error is None, f"{r.attack}: {r.error}"
+        assert r.safe is True, f"{r.attack}: {r.detail}"
+        assert "5 of 5" in r.detail
+
+
+def test_results_carry_the_attack_version():
+    for cls in ALL_MEMORY_ATTACKS:
+        r = cls().run(NaiveMemoryAdapter())
+        assert r.version == cls.version >= 2
+        assert len(r.fixtures) == 5

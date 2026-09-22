@@ -16,7 +16,7 @@ asks whether it noticed.
 
 from __future__ import annotations
 
-from agmi.adapters.base import MemoryAdapter, Record
+from agmi.adapters.base import MemoryAdapter
 from agmi.attacks.base import Attack
 
 

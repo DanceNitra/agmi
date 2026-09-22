@@ -14,6 +14,14 @@ agmi is a scorecard. Its value is that every cell was produced the same way, so 
 
 Maintainers are welcome to submit their own tool. Those rows land only after agmi reproduces them independently, and the README marks them: "submitted by the TOOL maintainer, reproduced independently by agmi on VERSION". Leave accepted cells as measured. If a claim in the README goes beyond what the row measured, it will be asked to come out.
 
+## Configuration rows
+
+The default row always stands: the tool as a fresh install ships it, every option at its default. A vendor's "you should have turned on X" is answered with another row, never by changing the default one. A configuration row differs from the default by exactly the named arguments (for example `InspeximusRecallAdapter(recall_kwargs={"trusted_only": True})`), is labelled with them (`inspeximus-default(trusted_only)`), and is measured by the same attacks with the same controls. A configuration that returns nothing scores `n/a`, not `safe`; the positive control sees to that.
+
+## Disputing a cell
+
+Use the "Dispute a cell" issue template. The maintainer reproduces on a second machine, records the outcome in the thread, and either corrects the cell with a changelog line or explains why it stands. Rows and disputes from a tool's own maintainers are welcome and are marked as such.
+
 ## Models and reference rows
 
 A re-implementation of a tool is welcome as a reference target and must be labelled `(model)` in the scorecard. It is never presented as a measurement of the real library.

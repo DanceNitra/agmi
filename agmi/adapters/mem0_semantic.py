@@ -81,6 +81,11 @@ class Mem0SemanticAdapter(SemanticMemoryAdapter):
         that can be published for every cell.
     label:
         Scorecard row name. Defaults to ``LABEL``.
+    infer:
+        ``True`` runs Mem0's default mode, where its own hosted LLM extracts
+        facts from each memory before storage. Needs a real
+        ``OPENAI_API_KEY``; the row is a separate, opt-in measurement with
+        the model and date named, and is never run with a stand-in.
 
     The adapter opens its store lazily on first use and on every
     ``reset()``. Call ``close()`` (or use it as a context manager) when done
@@ -88,8 +93,9 @@ class Mem0SemanticAdapter(SemanticMemoryAdapter):
     """
 
     def __init__(self, embedder: Embedder | None = None,
-                 label: str | None = None):
+                 label: str | None = None, infer: bool = False):
         self.embedder: Embedder = embedder or HashEmbedder()
+        self.infer = infer
         self.name = label or LABEL
         self._dir: tempfile.TemporaryDirectory | None = None
         self._root: Path | None = None
@@ -101,7 +107,8 @@ class Mem0SemanticAdapter(SemanticMemoryAdapter):
         self.close()
         self._dir = tempfile.TemporaryDirectory(prefix="agmi-mem0-semantic-")
         self._root = Path(self._dir.name)
-        self._mem = open_local_memory(self._root, self.embedder)
+        self._mem = open_local_memory(self._root, self.embedder,
+                                      live=self.infer)
 
     def close(self) -> None:
         """Release Mem0's handles and delete the store. Idempotent."""
@@ -131,10 +138,10 @@ class Mem0SemanticAdapter(SemanticMemoryAdapter):
 
     # --- the tool's own write and read paths ---------------------------
     def add_memory(self, item: MemoryItem) -> None:
-        kwargs = {"user_id": item.user_id, "infer": False}
-        if item.metadata:
-            kwargs["metadata"] = dict(item.metadata)
-        self._memory().add(item.text, **kwargs)
+        metadata = dict(item.metadata)
+        metadata.setdefault("source", item.source)
+        self._memory().add(item.text, user_id=item.user_id, infer=self.infer,
+                           metadata=metadata)
 
     def retrieve(self, query: str, user_id: str, k: int = 5) -> list[Retrieved]:
         mem = self._memory()
@@ -173,7 +180,7 @@ class Mem0SemanticAdapter(SemanticMemoryAdapter):
 
     def measured_on(self) -> str:
         """One line stating what this row was produced with."""
-        return (f"mem0ai {mem0_version()}, infer=False, default search "
+        return (f"mem0ai {mem0_version()}, infer={self.infer}, default search "
                 f"({self.read_path_features()}), "
                 f"{self.embedder.describe()}, "
                 f"{platform.system()} {platform.machine()}, "

@@ -51,6 +51,10 @@ class MemoryAdapter(ABC):
 
     #: Short tool name for the scorecard, e.g. "openfang".
     name: str
+    #: Set by verify() when it returns False: the tool's own reason, in one
+    #: line (the exception it raised, or which check failed). Printed in
+    #: the cell's detail so a deliberate refusal can be told from a crash.
+    verify_detail: str | None = None
 
     @abstractmethod
     def setup(self) -> None:

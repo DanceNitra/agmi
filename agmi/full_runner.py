@@ -23,6 +23,41 @@ same guarantee.
 from __future__ import annotations
 
 
+import datetime as _dt
+import json
+import platform
+import sys
+
+#: Filled by full_scorecard(); written out by ``--json``.
+_LAST_RUN: dict = {}
+
+
+def _verdict(status: str, memory_attack: bool, point) -> str:
+    """The word printed on the scorecard and the site. The internal status
+    values (safe / VULNERABLE / n/a) are what the tests pin; these are what
+    a reader sees. At rest: accepted, detected, reported. Front door:
+    surfaced, kept out."""
+    if status == "n/a":
+        return "n/a"
+    if memory_attack:
+        return "kept out" if status == "safe" else "surfaced"
+    if status == "reported":
+        return "reported"
+    if status == "safe":
+        return "reported" if point == "audit" else "detected"
+    return "accepted"
+
+
+def write_json(path: str) -> None:
+    """Write the last run as JSON: every cell with its status, printed
+    verdict and detail, each row's provenance line, the attack versions,
+    the date and the platform. This file is the single source every
+    published table is generated from (see ``agmi.render``)."""
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(_LAST_RUN, fh, indent=2)
+        fh.write("\n")
+
+
 def _mem0_semantic():
     """The memory-specific adapter for the Mem0 row, or None.
 
@@ -80,6 +115,7 @@ def full_scorecard() -> str:
     except ImportError:
         inspeximus_rows = []
     from agmi.adapters.naive_memory import NaiveMemoryAdapter
+    from agmi.adapters.defended_memory import DefendedMemoryAdapter
     from agmi.attacks.at_rest import ALL_AT_REST_ATTACKS
     from agmi.attacks.memory_specific import ALL_MEMORY_ATTACKS
 
@@ -99,33 +135,57 @@ def full_scorecard() -> str:
          NaiveMemoryAdapter(enforce_user_scope=True)),
         ("naive-mem(unscoped)", None,
          NaiveMemoryAdapter(enforce_user_scope=False)),
+        ("reference-defended(model)", None, DefendedMemoryAdapter()),
     ]
 
     cells: dict[tuple[str, str], str] = {}
+    details: dict[tuple[str, str], str] = {}
     checked_at: dict[str, str] = {}
+    measured_on: dict[str, str] = {}
     for label, ar_ad, sm_ad in rows:
         if ar_ad is not None:
             ar_ad.name = label
             point = getattr(ar_ad, "detection_point", "read")
             checked_at[label] = point
             for atk in at_rest:
-                status = atk.run(ar_ad).status
+                res = atk.run(ar_ad)
+                status = res.status
                 if status == "safe" and point == "audit":
                     status = "reported"
                 cells[(label, atk.name)] = status
+                details[(label, atk.name)] = res.detail or res.error or ""
         else:
             for atk in at_rest:
                 cells[(label, atk.name)] = "n/a"
         if sm_ad is not None:
             sm_ad.name = label
             for atk in mem:
-                cells[(label, atk.name)] = atk.run(sm_ad).status
-            close = getattr(sm_ad, "close", None)
-            if callable(close):
-                close()
+                res = atk.run(sm_ad)
+                cells[(label, atk.name)] = res.status
+                details[(label, atk.name)] = res.detail or res.error or ""
+            measured_on[label] = sm_ad.measured_on()
+            sm_ad.close()
         else:
             for atk in mem:
                 cells[(label, atk.name)] = "n/a"
+    _LAST_RUN.clear()
+    _LAST_RUN.update({
+        "date": _dt.date.today().isoformat(),
+        "platform": f"{platform.system()} {platform.machine()}, Python "
+                    f"{sys.version_info.major}.{sys.version_info.minor}",
+        "attack_versions": {a.name: a.version for a in at_rest + mem},
+        "rows": [
+            {"label": label,
+             "checked_at": checked_at.get(label),
+             "measured_on": measured_on.get(label),
+             "cells": {a.name: {"status": cells[(label, a.name)],
+                                "verdict": _verdict(cells[(label, a.name)],
+                                                    a.name in {m.name for m in mem},
+                                                    checked_at.get(label)),
+                                "detail": details.get((label, a.name), "")}
+                       for a in at_rest + mem}}
+            for label, _, _ in rows],
+    })
 
     short = {
         "tamper": "tamp", "truncate": "trunc", "delete_middle": "delMid",
@@ -139,14 +199,23 @@ def full_scorecard() -> str:
 
     def c(t): return t.center(col_w)
     head = " " * label_w + "| " + " | ".join(c(x) for x in cols)
-    lines = [head, "-" * len(head)]
+    versions = ", ".join(f"{a.name}@v{a.version}" for a in at_rest + mem)
+    lines = [f"attack versions: {versions}", "", head, "-" * len(head)]
     for label, _, _ in rows:
         line = [label.ljust(label_w) + "|"]
         line += [c(checked_at.get(label, "n/a"))]
-        line += [c(cells[(label, n)]) for n in all_names]
+        line += [c(_verdict(cells[(label, n)], n in {m.name for m in mem},
+                            checked_at.get(label))) for n in all_names]
         lines.append(" ".join(line[:1]) + " " + " | ".join(line[1:]))
     return "\n".join(lines)
 
 
 if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser(prog="python agmi/full_runner.py")
+    ap.add_argument("--json", metavar="PATH",
+                    help="also write the run as JSON to PATH")
+    args = ap.parse_args()
     print(full_scorecard())
+    if args.json:
+        write_json(args.json)

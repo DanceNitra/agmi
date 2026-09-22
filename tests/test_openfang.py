@@ -11,8 +11,7 @@ tip-persistence fix closes exactly that one gap without weakening the rest.
 
 from agmi.adapters.openfang import OpenFangAdapter
 from agmi.attacks.at_rest import (
-    TamperAttack, TruncateAttack, DeleteMiddleAttack,
-    ReorderAttack, ForgeAttack, ALL_AT_REST_ATTACKS,
+    ALL_AT_REST_ATTACKS,
 )
 
 

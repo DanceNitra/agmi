@@ -29,17 +29,20 @@ from agmi.adapters.semantic_base import SemanticMemoryAdapter
 from agmi.attacks.memory_specific import ALL_MEMORY_ATTACKS, MemoryAttackResult
 
 
-def run_memory_attacks(adapter: SemanticMemoryAdapter) -> list[MemoryAttackResult]:
+def run_memory_attacks(adapter: SemanticMemoryAdapter,
+                       filler: int = 0) -> list[MemoryAttackResult]:
     """Run the four memory-specific attacks against one adapter, in
-    catalogue order. Each attack resets the adapter itself."""
-    return [cls().run(adapter) for cls in ALL_MEMORY_ATTACKS]
+    catalogue order. Each attack resets the adapter itself. ``filler`` adds
+    that many unrelated genuine memories before every fixture, for the
+    scale tier."""
+    return [cls(filler=filler).run(adapter) for cls in ALL_MEMORY_ATTACKS]
 
 
 def format_memory_row(label: str, results: list[MemoryAttackResult],
                       measured_on: str) -> str:
     lines = [f"target      {label}", f"measured on {measured_on}", ""]
     for r in results:
-        lines.append(f"  {r.attack:28s} {r.status:12s} {r.detail or r.error}")
+        lines.append(f"  {r.attack:26s}@v{r.version} {r.status:12s} {r.detail or r.error}")
     return "\n".join(lines)
 
 
@@ -60,19 +63,30 @@ def _inspeximus(embedder: str):
     return InspeximusRecallAdapter()
 
 
+def _mem0_live(embedder: str):
+    """Mem0 with ``infer=True``: its default mode, where a hosted model
+    extracts facts before storage. Needs a real OPENAI_API_KEY."""
+    from agmi.adapters.mem0_semantic import Mem0SemanticAdapter
+    from agmi.embedders import get_embedder
+    return Mem0SemanticAdapter(get_embedder(embedder), infer=True,
+                               label="mem0-qdrant-local(infer=True)")
+
+
 #: Target name -> factory taking the embedder name. Add a line here when a
 #: new semantic adapter lands so it gets the same command as the others.
 TARGETS: dict[str, Callable[[str], SemanticMemoryAdapter]] = {
     "mem0": _mem0,
+    "mem0-live": _mem0_live,
     "langgraph-store": _langgraph_store,
     "inspeximus": _inspeximus,
 }
 
 
-def measure(target: str, embedder: str = "minilm"):
+def measure(target: str, embedder: str = "minilm", filler: int = 0):
     """Build the adapter for ``target`` and run the family against it.
     Returns ``(results, measured_on)``. Adapters that hold resources are
-    closed afterwards."""
+    closed afterwards. ``filler`` seeds that many unrelated memories before
+    every fixture (the scale tier)."""
     try:
         factory = TARGETS[target]
     except KeyError:
@@ -81,9 +95,10 @@ def measure(target: str, embedder: str = "minilm"):
             f"{', '.join(sorted(TARGETS))}") from None
     adapter = factory(embedder)
     try:
-        results = run_memory_attacks(adapter)
-        measured_on = adapter.measured_on() if hasattr(adapter, "measured_on") \
-            else "not recorded by this adapter"
+        results = run_memory_attacks(adapter, filler=filler)
+        measured_on = adapter.measured_on()
+        if filler:
+            measured_on += f", {filler} filler memories before every fixture"
         return results, measured_on
     finally:
         close = getattr(adapter, "close", None)
@@ -103,9 +118,12 @@ def main(argv: list[str] | None = None) -> int:
                         default="minilm",
                         help="ignored by targets that do not rank by an "
                              "embedder")
+    parser.add_argument("--scale", type=int, default=0, metavar="N",
+                        help="seed N unrelated memories before every "
+                             "fixture (the scale tier); 0 is the default row")
     args = parser.parse_args(argv)
     try:
-        results, measured_on = measure(args.target, args.embedder)
+        results, measured_on = measure(args.target, args.embedder, args.scale)
     except NotImplementedError as exc:
         print(f"cannot measure: {exc}", file=sys.stderr)
         return 2
