@@ -234,6 +234,7 @@ agmi/
   checks.py                 The two text checks the verdicts and the defended reference share, in the open
   mutations.py              Content-evasion mutations (paraphrase, homoglyph, zero-width, case-flip, dilute); the seed corpus the agent grows from
   signing.py                Signed writes: provenance bound by a key, so a forged label buys nothing
+  agent/                    The memory agent: authz gate, the hunt loop, the report writer, the CLI
   embedders.py              Hashing stand-in (offline) and all-MiniLM-L6-v2 (opt-in) for embedder-ranked rows
   embedding_endpoint.py     Local OpenAI-compatible embeddings server, for tools that only embed over a network
   measure.py                One command that runs the memory-specific family on any target with provenance
@@ -478,6 +479,19 @@ The five at-rest edits come from the tamper-evidence literature on append-only l
 - The hidden-instruction cell measures delivery into context, not whether a model obeys.
 - Rows are single, deterministic runs at the version shown. The scale tier (`--scale N`) and the second embedder (`bge-small`) are there to show a cell holds beyond the default fixture size and model; a cell is published as "holds under both" only once both have been run.
 - The preprint describes 0.5, the at-rest family only. The front-door family, the positive controls and the fixture sets are documented here and in the October report.
+
+## The memory agent
+
+The scorecard measures a tool against fixed attacks. The agent does the opposite: point it at one target and it searches the attacks, channels and mutations for the first that gets a false memory served as trusted, proves each landing, and reports only what it proved with the exact steps to reproduce. That is the "proof, not a checklist" posture applied to memory. Every proven landing is a new fixture the benchmark can adopt, so the agent grows the scorecard from its own work.
+
+```
+python -m agmi.agent --target defended        # a library target
+python -m agmi.agent --target mem0 --embedder minilm --json
+```
+
+On the undefended reference it lands all five write-based attacks in nine attempts; on the defended reference it searches over a hundred and lands only on the signed channel, reaching for the dilution mutation on the hijack, the exact hole the mutation engine found. What "lands" means is the attacker's memory served back as trusted context for an innocent question, the tool-attributable step and the precondition for downstream harm; it is not the model obeying, which no portable suite can drive.
+
+Two things keep the agent a security tool rather than an attack tool. An authorisation gate (`agmi/agent/authz.py`) runs before any target is touched and fails closed: a library target the caller already holds is allowed, a network host is allowed only on proven control (a host-named environment token or a consent file the operator writes), and anything else raises before the hunt starts. And the search is deterministic and offline by default, so the same target yields the same findings and the agent makes no network calls of its own beyond the target adapter's. Live HTTP targets, and an obedience oracle that watches for a canary action the model takes only if it believed the poison, are the next tier.
 
 ## Roadmap
 

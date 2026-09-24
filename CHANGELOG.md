@@ -1,6 +1,18 @@
 # Changelog
 
 ## Unreleased
+- The memory agent (`agmi/agent/`, `python -m agmi.agent`): searches the
+  six attacks, three channels and content-evasion mutations for the first
+  that gets a false memory served as trusted, proves each landing, and
+  reports only what it proved with reproduction steps. Lands all five
+  write-based attacks on the undefended reference in nine attempts; on the
+  defended reference it searches 131 and lands only on the signed channel,
+  reaching for the dilution mutation on the hijack. An authorisation gate
+  (`agmi/agent/authz.py`) runs before any target is touched and fails
+  closed: library targets allowed, network hosts only on proven control
+  (host-named env token or a consent file), else it raises. The search is
+  deterministic and offline; live HTTP targets and an obedience oracle are
+  the next tier.
 - Two new front-door attacks. `update_poisoning`: a "correction" of a fact
   the user stated; the control runs before the attacker's write since
   replacement is the attack; detail says replaced or alongside. Every real
