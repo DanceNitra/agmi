@@ -140,6 +140,8 @@ class InspeximusRecallAdapter(SemanticMemoryAdapter):
     def add_memory(self, item: MemoryItem) -> None:
         meta = dict(item.metadata)
         meta.setdefault("source", item.source)
+        if item.signature:
+            meta.setdefault("signature", item.signature)
         self._memory().remember(item.text, user_id=item.user_id, meta=meta)
 
     def retrieve(self, query: str, user_id: str, k: int = 5) -> list[Retrieved]:

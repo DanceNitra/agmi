@@ -1,6 +1,19 @@
 # Changelog
 
 ## Unreleased
+- Three attacker channels on every front-door attack (external; laundered:
+  forged "user" label, no key; agent-laundered: forged label with a valid
+  signature), a tool kept out only when it holds on all three. Found by
+  DanceNitra in issue #3: a label-only provenance row and this suite's own
+  reference passed on the label alone, with the content checks never
+  exercised. Signed writes (`agmi/signing.py`) bind provenance to a key
+  so a forged label buys nothing; the reference store verifies them. The
+  honest limit is recorded: a plausible planted fact signed by the agent
+  cannot be caught by any store. A regression test switches the content
+  checks off and requires the agent-laundered channel to fail. Attack
+  versions bump: memory_injection@v3, retrieval_hijack@v4,
+  indirect_prompt_injection@v3. Attacker level (write-access,
+  store-access) is carried on every result and in the results file.
 - Letta archival memory (`letta_archival.py`): the fourth real tool with
   all four front-door cells. Real Letta through `insert_passage` and
   `search_agent_archival_memory_async`, one agent per user, embeddings

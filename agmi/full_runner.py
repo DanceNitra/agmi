@@ -190,6 +190,8 @@ def full_scorecard() -> str:
         "platform": f"{platform.system()} {platform.machine()}, Python "
                     f"{sys.version_info.major}.{sys.version_info.minor}",
         "attack_versions": {a.name: a.version for a in at_rest + mem},
+        "attackers": {**{a.name: "store-access" for a in at_rest},
+                      **{a.name: "write-access" for a in mem}},
         "rows": [
             {"label": label,
              "checked_at": checked_at.get(label),

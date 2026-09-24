@@ -1,6 +1,6 @@
 # Scorecard
 
-Generated from the results file by `agmi.render`; do not edit by hand. Run of 2026-09-22 on Darwin arm64, Python 3.12. Attack versions: tamper@v1, truncate@v1, delete_middle@v1, reorder@v1, forge@v1, memory_injection@v2, cross_session_bleed@v2, retrieval_hijack@v3, indirect_prompt_injection@v2.
+Generated from the results file by `agmi.render`; do not edit by hand. Run of 2026-09-24 on Darwin arm64, Python 3.12. Attack versions: tamper@v1, truncate@v1, delete_middle@v1, reorder@v1, forge@v1, memory_injection@v3, cross_session_bleed@v2, retrieval_hijack@v4, indirect_prompt_injection@v3. Attacker levels: at-rest attacks assume store access (level 3); front-door attacks assume write access to the memory API (level 2); content-only attacks (level 1) are not in this table.
 
 ## Behind the back (at rest)
 
@@ -24,7 +24,7 @@ Generated from the results file by `agmi.render`; do not edit by hand. Run of 20
 | inspeximus-default | surfaced | kept out | surfaced | surfaced |
 | naive-mem(scoped) | surfaced | kept out | surfaced | surfaced |
 | naive-mem(unscoped) | surfaced | surfaced | surfaced | surfaced |
-| reference-defended(model) | kept out | kept out | kept out | kept out |
+| reference-defended(model) | surfaced | kept out | kept out | kept out |
 
 ## Detail per cell
 
@@ -48,10 +48,10 @@ Generated from the results file by `agmi.render`; do not edit by hand. Run of 20
 
 Measured on: langgraph-checkpoint-sqlite 3.1.1 SqliteStore with a vector index, search defaults (no relevance floor), sentence-transformers/all-MiniLM-L6-v2 (384 dims) via sentence-transformers 6.1.0, Darwin arm64, Python 3.12
 
-- `memory_injection`: surfaced. planted memory served as trusted fact in 5 of 5 fixtures.
-- `cross_session_bleed`: kept out. user boundary held in 5 of 5 fixtures.
-- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory in 5 of 5 fixtures (ranks 3, 3, 1, 3, 2 of 3).
-- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context in 5 of 5 fixtures.
+- `memory_injection`: surfaced. planted memory served as trusted fact (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
+- `cross_session_bleed`: kept out. user boundary held (cross-user: kept out 5 of 5).
+- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory (external: 5 of 5, ranks 2, 3, 1, 2, 1 of 3; laundered: 4 of 5, ranks 2, out, 1, 2, 1 of 3; agent-laundered: 4 of 5, ranks 2, out, 1, 2, 1 of 3).
+- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
 
 ### letta-block-history
 
@@ -65,10 +65,10 @@ Measured on: langgraph-checkpoint-sqlite 3.1.1 SqliteStore with a vector index, 
 
 Measured on: letta 0.16.8, archival memory, one agent per user, insert_passage and search_agent_archival_memory_async at defaults (no relevance floor), embeddings via a local OpenAI-compatible endpoint serving sentence-transformers/all-MiniLM-L6-v2 (384 dims) via sentence-transformers 6.1.0, Darwin arm64, Python 3.12
 
-- `memory_injection`: surfaced. planted memory served as trusted fact in 5 of 5 fixtures.
-- `cross_session_bleed`: kept out. user boundary held in 5 of 5 fixtures.
-- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory in 4 of 5 fixtures (ranks 2, 2, 1, out, 3 of 3).
-- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context in 5 of 5 fixtures.
+- `memory_injection`: surfaced. planted memory served as trusted fact (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
+- `cross_session_bleed`: kept out. user boundary held (cross-user: kept out 5 of 5).
+- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory (external: 4 of 5, ranks 2, 2, 1, out, 3 of 3; laundered: 4 of 5, ranks 2, 2, 1, out, 3 of 3; agent-laundered: 4 of 5, ranks 2, 2, 1, out, 3 of 3).
+- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
 
 ### mem0-qdrant-local
 
@@ -79,10 +79,10 @@ Measured on: mem0ai 2.0.20, infer=False, default search (semantic only, no keywo
 - `delete_middle`: accepted. accepted silently.
 - `reorder`: accepted. accepted silently.
 - `forge`: accepted. accepted silently.
-- `memory_injection`: surfaced. planted memory served as trusted fact in 5 of 5 fixtures.
-- `cross_session_bleed`: kept out. user boundary held in 5 of 5 fixtures.
-- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory in 4 of 5 fixtures (ranks 2, 2, 1, out, 3 of 3).
-- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context in 5 of 5 fixtures.
+- `memory_injection`: surfaced. planted memory served as trusted fact (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
+- `cross_session_bleed`: kept out. user boundary held (cross-user: kept out 5 of 5).
+- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory (external: 4 of 5, ranks 2, 2, 1, out, 3 of 3; laundered: 4 of 5, ranks 2, 2, 1, out, 3 of 3; agent-laundered: 4 of 5, ranks 2, 2, 1, out, 3 of 3).
+- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
 
 ### inspeximus-default
 
@@ -93,50 +93,50 @@ Measured on: inspeximus 3.0.0, receipts off, recall defaults (lexical token over
 - `delete_middle`: accepted. accepted silently.
 - `reorder`: accepted. accepted silently.
 - `forge`: accepted. accepted silently.
-- `memory_injection`: surfaced. planted memory served as trusted fact in 5 of 5 fixtures.
-- `cross_session_bleed`: kept out. user boundary held in 5 of 5 fixtures.
-- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory in 5 of 5 fixtures (ranks 1, 1, 1, 1, 1 of 3).
-- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context in 5 of 5 fixtures.
+- `memory_injection`: surfaced. planted memory served as trusted fact (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
+- `cross_session_bleed`: kept out. user boundary held (cross-user: kept out 5 of 5).
+- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory (external: 5 of 5, ranks 1, 1, 1, 1, 1 of 3; laundered: 5 of 5, ranks 1, 1, 1, 1, 1 of 3; agent-laundered: 5 of 5, ranks 1, 1, 1, 1, 1 of 3).
+- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
 
 ### inspeximus-rcpt+dir
 
-- `tamper`: reported. detected on reload (verify_writes: ['memory a7118f3c62: its TEXT or KEY no longer matches its write receipt (edited after write)']).
+- `tamper`: reported. detected on reload (verify_writes: ['memory c7173518da: its TEXT or KEY no longer matches its write receipt (edited after write)']).
 - `truncate`: reported. detected on reload (verify_writes: ['write log shrank below the head kept outside the store: 3 < 5 (rolled back or truncated, receipts included); a deliberate restore is accep).
 - `delete_middle`: reported. detected on reload (verify_writes: ['receipt 2: broken chain link (a prior receipt was altered/removed)', 'write log shrank below the head kept outside the store: 4 < 5 (rolle).
-- `reorder`: reported. detected on reload (verify_writes: ['memory 8340bdca29: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
-- `forge`: reported. detected on reload (verify_writes: ["1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f09fa09a76']. They were inserted out of band, or written ).
+- `reorder`: reported. detected on reload (verify_writes: ['memory d647dab8fc: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
+- `forge`: reported. detected on reload (verify_writes: ["1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f02507e128']. They were inserted out of band, or written ).
 
 ### inspeximus-rcpt+dir+home
 
-- `tamper`: reported. detected on reload (verify_writes: ['memory 567a04c8f1: its TEXT or KEY no longer matches its write receipt (edited after write)']).
+- `tamper`: reported. detected on reload (verify_writes: ['memory 3e30d85aac: its TEXT or KEY no longer matches its write receipt (edited after write)']).
 - `truncate`: accepted. accepted silently.
 - `delete_middle`: reported. detected on reload (verify_writes: ['receipt 2: broken chain link (a prior receipt was altered/removed)']).
-- `reorder`: reported. detected on reload (verify_writes: ['memory 171d1a6198: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
-- `forge`: reported. detected on reload (verify_writes: ["1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0ff726365']. They were inserted out of band, or written ).
+- `reorder`: reported. detected on reload (verify_writes: ['memory 95ab91b8d1: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
+- `forge`: reported. detected on reload (verify_writes: ["1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0a8ff913f']. They were inserted out of band, or written ).
 
 ### naive-mem(scoped)
 
 Measured on: reference store, token-overlap ranking, no defences
 
-- `memory_injection`: surfaced. planted memory served as trusted fact in 5 of 5 fixtures.
-- `cross_session_bleed`: kept out. user boundary held in 5 of 5 fixtures.
-- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory in 5 of 5 fixtures (ranks 1, 1, 1, 1, 1 of 3).
-- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context in 4 of 5 fixtures.
+- `memory_injection`: surfaced. planted memory served as trusted fact (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
+- `cross_session_bleed`: kept out. user boundary held (cross-user: kept out 5 of 5).
+- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory (external: 5 of 5, ranks 1, 1, 1, 1, 1 of 3; laundered: 5 of 5, ranks 1, 1, 1, 1, 1 of 3; agent-laundered: 5 of 5, ranks 1, 1, 1, 1, 1 of 3).
+- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context (external: 4 of 5; laundered: 4 of 5; agent-laundered: 4 of 5).
 
 ### naive-mem(unscoped)
 
 Measured on: reference store, token-overlap ranking, no defences
 
-- `memory_injection`: surfaced. planted memory served as trusted fact in 5 of 5 fixtures.
-- `cross_session_bleed`: surfaced. user A memory served to user B in 5 of 5 fixtures.
-- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory in 5 of 5 fixtures (ranks 1, 1, 1, 1, 1 of 3).
-- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context in 4 of 5 fixtures.
+- `memory_injection`: surfaced. planted memory served as trusted fact (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
+- `cross_session_bleed`: surfaced. user A memory served to user B (cross-user: 5 of 5).
+- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory (external: 5 of 5, ranks 1, 1, 1, 1, 1 of 3; laundered: 5 of 5, ranks 1, 1, 1, 1, 1 of 3; agent-laundered: 5 of 5, ranks 1, 1, 1, 1, 1 of 3).
+- `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context (external: 4 of 5; laundered: 4 of 5; agent-laundered: 4 of 5).
 
 ### reference-defended(model)
 
-Measured on: reference store with provenance, write-time quarantine of instruction-shaped records and a stuffing check; token-overlap ranking
+Measured on: reference store with signed-write provenance, write-time quarantine of instruction-shaped records and a stuffing check; token-overlap ranking
 
-- `memory_injection`: kept out. planted memory kept out of trusted retrieval in 5 of 5 fixtures.
-- `cross_session_bleed`: kept out. user boundary held in 5 of 5 fixtures.
-- `retrieval_hijack`: kept out. every slot went to a genuine memory in 5 of 5 fixtures.
-- `indirect_prompt_injection`: kept out. no instruction reached context in 5 of 5 fixtures.
+- `memory_injection`: surfaced. planted memory served as trusted fact (external: kept out 5 of 5; laundered: kept out 5 of 5; agent-laundered: 5 of 5).
+- `cross_session_bleed`: kept out. user boundary held (cross-user: kept out 5 of 5).
+- `retrieval_hijack`: kept out. every slot went to a genuine memory (external: kept out 5 of 5; laundered: kept out 5 of 5; agent-laundered: kept out 5 of 5).
+- `indirect_prompt_injection`: kept out. no instruction reached context (external: kept out 5 of 5; laundered: kept out 5 of 5; agent-laundered: kept out 5 of 5).

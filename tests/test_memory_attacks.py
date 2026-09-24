@@ -38,7 +38,9 @@ def test_injection_always_surfaces_on_a_store_with_no_provenance():
     r = MemoryInjectionAttack().run(NaiveMemoryAdapter())
     assert r.error is None
     assert r.safe is False
-    assert "5 of 5" in r.detail
+    for channel in ("external", "laundered", "agent-laundered"):
+        assert r.channels[channel] == [True] * 5, channel
+    assert r.attacker == "write-access"
 
 
 def test_bleed_is_decided_by_user_scoping():
@@ -65,7 +67,7 @@ def test_hijack_outranks_genuine_memories_on_a_plain_ranker():
     r = RetrievalHijackAttack().run(NaiveMemoryAdapter())
     assert r.error is None
     assert r.safe is False
-    assert "ranks 1, 1, 1, 1, 1 of 3" in r.detail
+    assert r.detail.count("ranks 1, 1, 1, 1, 1 of 3") == 3  # all three channels
 
 
 def test_prompt_injection_is_delivered_by_a_plain_ranker():
@@ -75,7 +77,8 @@ def test_prompt_injection_is_delivered_by_a_plain_ranker():
     r = IndirectPromptInjectionAttack().run(NaiveMemoryAdapter())
     assert r.error is None
     assert r.safe is False
-    assert "4 of 5" in r.detail
+    for channel in ("external", "laundered", "agent-laundered"):
+        assert r.channels[channel].count(True) == 4, channel
 
 
 def test_a_silent_read_path_earns_no_safe_cell():
@@ -94,20 +97,70 @@ def test_positive_control_passes_on_a_working_store():
         assert r.error is None, f"{r.attack}: {r.error}"
 
 
-def test_every_cell_is_winnable_by_the_defended_reference():
-    """A benchmark nobody can pass proves nothing. The reference store with
-    provenance, write-time quarantine and a stuffing check keeps every
-    attacker memory out on every fixture, and still serves the genuine
-    ones (the positive control passes)."""
-    for cls in ALL_MEMORY_ATTACKS:
-        r = cls().run(DefendedMemoryAdapter())
+def test_the_defended_reference_holds_where_a_store_can_hold():
+    """A benchmark nobody can pass proves nothing, so the reference store
+    shows what each defence buys, channel by channel. Provenance keeps the
+    planted fact out on the external channel and cannot on the laundered
+    one: a plausible fact wearing the user's label is indistinguishable
+    from a genuine one, and only ingestion marking upstream can prevent
+    it. The content checks hold on both channels, which is the point of
+    the second channel: it is what separates them from the label."""
+    results = {cls.name: cls().run(DefendedMemoryAdapter())
+               for cls in ALL_MEMORY_ATTACKS}
+    for r in results.values():
         assert r.error is None, f"{r.attack}: {r.error}"
-        assert r.safe is True, f"{r.attack}: {r.detail}"
-        assert "5 of 5" in r.detail
+    inj = results["memory_injection"]
+    assert inj.channels["external"] == [False] * 5       # label and signature both say no
+    assert inj.channels["laundered"] == [False] * 5      # label forged, no key: signature says no
+    assert inj.channels["agent-laundered"] == [True] * 5  # signed by the agent: nothing can tell
+    assert inj.safe is False
+    for name in ("cross_session_bleed", "retrieval_hijack",
+                 "indirect_prompt_injection"):
+        r = results[name]
+        assert r.safe is True, f"{name}: {r.detail}"
+        for channel, outcomes in r.channels.items():
+            assert outcomes == [False] * 5, f"{name} {channel}: {outcomes}"
 
 
-def test_results_carry_the_attack_version():
+def test_provenance_alone_never_passes_a_content_cell():
+    """The check DanceNitra ran by hand: switch the two content checks off
+    and the reference store must lose the hijack and hidden-instruction
+    cells on the agent-laundered channel, where the attacker's write is
+    signed like a genuine one. If this passes with the checks off, that
+    channel has stopped doing its job."""
+    import agmi.adapters.defended_memory as dm
+    saved = dm.looks_like_instruction, dm.looks_stuffed
+    dm.looks_like_instruction = lambda text: False
+    dm.looks_stuffed = lambda text: False
+    try:
+        hijack = RetrievalHijackAttack().run(DefendedMemoryAdapter())
+        prompt = IndirectPromptInjectionAttack().run(DefendedMemoryAdapter())
+    finally:
+        dm.looks_like_instruction, dm.looks_stuffed = saved
+    assert hijack.channels["external"] == [False] * 5
+    assert hijack.channels["laundered"] == [False] * 5
+    assert hijack.channels["agent-laundered"] == [True] * 5
+    assert prompt.channels["external"] == [False] * 5
+    assert prompt.channels["laundered"] == [False] * 5
+    assert prompt.channels["agent-laundered"].count(True) >= 4
+
+
+def test_results_carry_the_attack_version_and_attacker_level():
     for cls in ALL_MEMORY_ATTACKS:
         r = cls().run(NaiveMemoryAdapter())
         assert r.version == cls.version >= 2
         assert len(r.fixtures) == 5
+        assert r.attacker == "write-access"
+        assert r.channels
+
+
+def test_signatures_cannot_be_forged_without_the_key():
+    from agmi.signing import Keyring
+    ring = Keyring()
+    sig = ring.sign("victim", "user", "The user drinks tea.")
+    assert ring.verify("victim", "user", "The user drinks tea.", sig)
+    assert not ring.verify("victim", "user", "The user drinks coffee.", sig)
+    assert not ring.verify("victim", "external", "The user drinks tea.", sig)
+    assert not ring.verify("attacker", "user", "The user drinks tea.", sig)
+    assert not ring.verify("victim", "user", "The user drinks tea.", None)
+    assert not Keyring().verify("victim", "user", "The user drinks tea.", sig)

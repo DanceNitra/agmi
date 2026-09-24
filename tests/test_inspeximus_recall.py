@@ -91,7 +91,7 @@ def test_row_matches_the_published_measurement():
     # on. Statuses are pinned on every version: a change there is news.
     if inspeximus_version() == "3.0.0":
         hijack = next(r for r in results if r.attack == "retrieval_hijack")
-        assert "ranks 1, 1, 1, 1, 1 of 3" in hijack.detail, hijack.detail
+        assert hijack.detail.count("ranks 1, 1, 1, 1, 1 of 3") == 3, hijack.detail
 
 
 def test_trusted_only_with_no_trust_seeds_earns_no_cell():

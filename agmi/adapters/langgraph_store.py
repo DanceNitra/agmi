@@ -152,6 +152,8 @@ class LangGraphSqliteStoreAdapter(SemanticMemoryAdapter):
     # --- the tool's own write and read paths ---------------------------
     def add_memory(self, item: MemoryItem) -> None:
         value = {"text": item.text, "source": item.source}
+        if item.signature:
+            value["signature"] = item.signature
         if item.metadata:
             value.update({k: v for k, v in item.metadata.items() if k != "text"})
         self._memory().put((NAMESPACE_ROOT, item.user_id), str(uuid.uuid4()),

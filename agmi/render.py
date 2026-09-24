@@ -55,11 +55,17 @@ def _table(rows: list[dict], names: list[str], with_point: bool) -> list[str]:
 
 def render(run: dict) -> str:
     versions = ", ".join(f"{k}@v{v}" for k, v in run["attack_versions"].items())
+    attackers = run.get("attackers", {})
+    levels = ""
+    if attackers:
+        levels = (" Attacker levels: at-rest attacks assume store access (level 3); "
+                  "front-door attacks assume write access to the memory API (level 2); "
+                  "content-only attacks (level 1) are not in this table.")
     lines = [
         "# Scorecard",
         "",
         f"Generated from the results file by `agmi.render`; do not edit by hand. "
-        f"Run of {run['date']} on {run['platform']}. Attack versions: {versions}.",
+        f"Run of {run['date']} on {run['platform']}. Attack versions: {versions}.{levels}",
         "",
         "## Behind the back (at rest)",
         "",

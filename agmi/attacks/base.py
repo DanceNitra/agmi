@@ -43,6 +43,8 @@ class AttackResult:
     #: whenever a fixture or verdict rule changes, so cells from different
     #: reports are never compared as if the attack had stood still.
     version: int = 1
+    #: Who the attacker is: "store-access" (edits the files) here.
+    attacker: str = "store-access"
 
     @property
     def status(self) -> str:

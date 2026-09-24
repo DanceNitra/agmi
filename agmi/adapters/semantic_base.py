@@ -36,6 +36,9 @@ class MemoryItem:
     user_id: str
     metadata: dict = field(default_factory=dict)
     source: str = "user"
+    #: Signature over (user_id, source, text) by the writer's key, or None.
+    #: Adapters pass it to the tool as metadata; see ``agmi.signing``.
+    signature: str | None = None
 
 
 @dataclass

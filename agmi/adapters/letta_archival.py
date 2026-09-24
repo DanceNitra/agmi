@@ -221,6 +221,8 @@ class LettaArchivalAdapter(SemanticMemoryAdapter):
         from letta.services.passage_manager import PassageManager
         state = self._agent(item.user_id)
         tags = [f"source:{item.source}"]
+        if item.signature:
+            tags.append(f"signature:{item.signature}")
         asyncio.run(PassageManager().insert_passage(state, item.text,
                                                     self._actor, tags=tags))
 

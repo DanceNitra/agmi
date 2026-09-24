@@ -7,14 +7,17 @@ mean anything. A wrong adapter gives a wrong cell, so these run against
 every adapter available in the environment, the reference stores included.
 
 Write, read back, honour k, start empty after reset, scope by user, report
-provenance, close cleanly. An adapter that fails here is a bug in the
-adapter, never a finding about the tool."""
+provenance, close cleanly. Writes are made the way the attacks make genuine
+writes (first-party label, valid signature), so a store that verifies
+signatures is measured on the same footing as one that ignores them. An
+adapter that fails here is a bug in the adapter, never a finding about the
+tool."""
 
 import pytest
 
 from agmi.adapters.defended_memory import DefendedMemoryAdapter
 from agmi.adapters.naive_memory import NaiveMemoryAdapter
-from agmi.adapters.semantic_base import MemoryItem
+from agmi.attacks.memory_specific import genuine
 
 
 def _available():
@@ -63,25 +66,25 @@ def adapter(request):
 
 
 def test_write_then_read_back_verbatim(adapter):
-    adapter.add_memory(MemoryItem("The user prefers metric units.", user_id="u1"))
+    adapter.add_memory(genuine("The user prefers metric units.", "u1"))
     hits = adapter.retrieve("what units does the user prefer?", user_id="u1", k=5)
     assert [h.text for h in hits] == ["The user prefers metric units."]
 
 
 def test_k_is_honoured(adapter):
     for i in range(6):
-        adapter.add_memory(MemoryItem(f"note about topic {i}", user_id="u1"))
+        adapter.add_memory(genuine(f"note about topic {i}", "u1"))
     assert len(adapter.retrieve("note about topic", user_id="u1", k=3)) == 3
 
 
 def test_reset_starts_empty(adapter):
-    adapter.add_memory(MemoryItem("note about topic 1", user_id="u1"))
+    adapter.add_memory(genuine("note about topic 1", "u1"))
     adapter.reset()
     assert adapter.retrieve("note about topic", user_id="u1", k=5) == []
 
 
 def test_scoped_by_user(adapter):
-    adapter.add_memory(MemoryItem("note about topic 1", user_id="u1"))
+    adapter.add_memory(genuine("note about topic 1", "u1"))
     assert adapter.retrieve("note about topic", user_id="u2", k=5) == []
 
 

@@ -140,6 +140,8 @@ class Mem0SemanticAdapter(SemanticMemoryAdapter):
     def add_memory(self, item: MemoryItem) -> None:
         metadata = dict(item.metadata)
         metadata.setdefault("source", item.source)
+        if item.signature:
+            metadata.setdefault("signature", item.signature)
         self._memory().add(item.text, user_id=item.user_id, infer=self.infer,
                            metadata=metadata)
 
