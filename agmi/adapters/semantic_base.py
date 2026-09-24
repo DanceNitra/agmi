@@ -82,6 +82,16 @@ class SemanticMemoryAdapter(ABC):
         be tested for cross-session bleed."""
         return True
 
+    def retrieve_where(self, query: str, user_id: str, where: dict,
+                       k: int = 5) -> list[Retrieved]:
+        """Retrieve with the tool's own metadata filter applied (``where``
+        is a flat dict of metadata key to required value). Used by the
+        metadata-poisoning attack: a pipeline that reads only memories
+        tagged trusted, and an attacker who writes the tag. Adapters for
+        tools with a metadata filter override this; the default says the
+        tool has none, and the attack scores n/a."""
+        raise NotImplementedError("tool has no metadata filter on retrieval")
+
     def close(self) -> None:
         """Release anything the adapter holds. The runner calls this after
         the last attack. Default: nothing to release."""

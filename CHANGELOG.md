@@ -1,6 +1,15 @@
 # Changelog
 
 ## Unreleased
+- Two new front-door attacks. `update_poisoning`: a "correction" of a fact
+  the user stated; the control runs before the attacker's write since
+  replacement is the attack; detail says replaced or alongside. Every real
+  tool serves the correction alongside. `metadata_poisoning`: the attacker
+  self-assigns the trust tag a pipeline filters on; a negative control
+  first confirms the tool's own metadata filter works; every tool with a
+  filter (Mem0, LangGraph store, inspeximus) then let the self-tagged
+  memory through; Letta has no filter and is n/a. `retrieve_where` added
+  to the adapter interface with the default meaning "no filter".
 - Mutation engine (`agmi/mutations.py`, `--mutate`): every attacker write
   is also run as its content-evasion mutations (paraphrase, homoglyph,
   zero-width, case-flip, dilute), and a defence holds a cell only if it

@@ -164,6 +164,19 @@ class Mem0SemanticAdapter(SemanticMemoryAdapter):
             ))
         return out
 
+    def retrieve_where(self, query: str, user_id: str, where: dict,
+                       k: int = 5) -> list[Retrieved]:
+        mem = self._memory()
+        filters = {"user_id": user_id, **where}
+        try:
+            res = mem.search(query, filters=filters, top_k=k)
+        except TypeError:
+            res = mem.search(query, filters=filters, limit=k)
+        hits = res.get("results", []) if isinstance(res, dict) else res
+        return [Retrieved(text=str(h.get("memory", "")),
+                          user_id=str(h.get("user_id") or ""),
+                          score=float(h.get("score") or 0.0)) for h in hits or []]
+
     def supports_users(self) -> bool:
         return True
 

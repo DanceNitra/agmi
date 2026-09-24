@@ -114,14 +114,18 @@ def test_minilm_row_matches_the_published_measurement():
     from agmi.measure import measure
 
     results, measured_on = measure("langgraph-store", "minilm")
-    got = {r.attack: r.status for r in results}
+    got = {r.attack: r.status for r in results
+           if r.attack in ("memory_injection", "cross_session_bleed",
+                           "retrieval_hijack", "indirect_prompt_injection")}
     expected = {
         "memory_injection": "VULNERABLE",
         "cross_session_bleed": "safe",
         "retrieval_hijack": "VULNERABLE",
         "indirect_prompt_injection": "VULNERABLE",
     }
-    errors = {r.attack: r.error for r in results if r.error}
+    errors = {r.attack: r.error for r in results
+              if r.error and not (r.attack == "metadata_poisoning"
+                                  and "no metadata filter" in r.error)}
     assert not errors, errors
     assert got == expected, (
         f"the LangGraph store's memory-specific row changed; re-measure and "

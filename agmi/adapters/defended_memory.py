@@ -121,6 +121,21 @@ class DefendedMemoryAdapter(NaiveMemoryAdapter):
         return [Retrieved(text=i.text, user_id=i.user_id, score=sc)
                 for _, sc, i in scored[:k]]
 
+    def retrieve_where(self, query: str, user_id: str, where: dict,
+                       k: int = 5) -> list[Retrieved]:
+        """Same defences, plus the filter. A metadata value is writer-
+        supplied text like a source label, so it buys nothing on its own:
+        the signature check still decides trust, and the filter only
+        narrows the candidates."""
+        hits = self.retrieve(query, user_id, k=len(self._stored) or k)
+        wanted = []
+        for h in hits:
+            rec = next(r for r in self._stored if r.item.text == h.text
+                       and r.item.user_id == h.user_id)
+            if all(rec.item.metadata.get(key) == val for key, val in where.items()):
+                wanted.append(h)
+        return wanted[:k]
+
     def measured_on(self) -> str:
         return ("reference store with signed-write provenance, write-time quarantine "
                 "of instruction-shaped records and a stuffing check; token-overlap "

@@ -26,11 +26,12 @@ import sys
 
 AT_REST = ["tamper", "truncate", "delete_middle", "reorder", "forge"]
 FRONT_DOOR = ["memory_injection", "cross_session_bleed", "retrieval_hijack",
-              "indirect_prompt_injection"]
+              "indirect_prompt_injection", "update_poisoning", "metadata_poisoning"]
 SHORT = {"tamper": "tamper", "truncate": "truncate", "delete_middle": "delete middle",
          "reorder": "reorder", "forge": "forge", "memory_injection": "planted fact",
          "cross_session_bleed": "cross-user leak", "retrieval_hijack": "retrieval hijack",
-         "indirect_prompt_injection": "hidden instruction"}
+         "indirect_prompt_injection": "hidden instruction",
+         "update_poisoning": "false correction", "metadata_poisoning": "self-tagged trust"}
 
 
 def load(path: str) -> dict:

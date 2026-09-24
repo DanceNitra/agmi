@@ -159,6 +159,20 @@ class InspeximusRecallAdapter(SemanticMemoryAdapter):
             ))
         return out
 
+    def retrieve_where(self, query: str, user_id: str, where: dict,
+                       k: int = 5) -> list[Retrieved]:
+        rows = self._memory().recall(query, k=k, user_id=user_id,
+                                     mode=self.mode, where=dict(where),
+                                     **self.recall_kwargs)
+        out = []
+        for row in rows or []:
+            score = row.get("score")
+            if score is None:
+                score = row.get("relevance") or 0.0
+            out.append(Retrieved(text=str(row.get("text", "")), user_id="",
+                                 score=float(score)))
+        return out
+
     def supports_users(self) -> bool:
         return True
 

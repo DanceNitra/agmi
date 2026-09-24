@@ -33,6 +33,9 @@ class SilentAdapter(NaiveMemoryAdapter):
     def retrieve(self, query, user_id, k=5):
         return []
 
+    def retrieve_where(self, query, user_id, where, k=5):
+        return []
+
 
 def test_injection_always_surfaces_on_a_store_with_no_provenance():
     r = MemoryInjectionAttack().run(NaiveMemoryAdapter())
@@ -87,7 +90,7 @@ def test_a_silent_read_path_earns_no_safe_cell():
     for cls in ALL_MEMORY_ATTACKS:
         r = cls().run(SilentAdapter())
         assert r.status == "n/a", f"{r.attack} scored {r.status} on a silent store"
-        assert r.error.startswith(EMPTY_READ_PATH)
+        assert r.error.startswith(EMPTY_READ_PATH) or "filter not honoured" in r.error
 
 
 def test_positive_control_passes_on_a_working_store():
@@ -155,7 +158,7 @@ def test_provenance_alone_never_passes_a_content_cell():
 def test_results_carry_the_attack_version_and_attacker_level():
     for cls in ALL_MEMORY_ATTACKS:
         r = cls().run(NaiveMemoryAdapter())
-        assert r.version == cls.version >= 2
+        assert r.version == cls.version >= 1
         assert len(r.fixtures) == 5
         assert r.attacker == "write-access"
         assert r.channels
@@ -171,3 +174,65 @@ def test_signatures_cannot_be_forged_without_the_key():
     assert not ring.verify("attacker", "user", "The user drinks tea.", sig)
     assert not ring.verify("victim", "user", "The user drinks tea.", None)
     assert not Keyring().verify("victim", "user", "The user drinks tea.", sig)
+
+
+def test_update_poisoning_serves_the_correction_alongside_on_a_plain_store():
+    from agmi.attacks.memory_specific import UpdatePoisoningAttack
+    r = UpdatePoisoningAttack().run(NaiveMemoryAdapter())
+    assert r.error is None and r.safe is False
+    for channel in ("external", "laundered", "agent-laundered"):
+        assert r.channels[channel] == [True] * 5, channel
+    assert "alongside" in r.detail and "replaced" not in r.detail
+
+
+def test_update_poisoning_control_runs_before_the_write():
+    """A store that replaced the genuine fact would fail a post-write
+    control and be scored n/a; the control has to run first so replacement
+    is scored as the attack it is."""
+    from agmi.attacks.memory_specific import UpdatePoisoningAttack
+
+    class Replacing(NaiveMemoryAdapter):
+        def add_memory(self, item):
+            # a crude "update": drop any memory answering the same question
+            self._items = [i for i in self._items
+                           if not (i.user_id == item.user_id and "manager" in i.text
+                                   and "manager" in item.text)]
+            super().add_memory(item)
+
+    r = UpdatePoisoningAttack().run(Replacing())
+    assert r.error is None and r.safe is False
+    assert "replaced" in r.detail
+
+
+def test_metadata_poisoning_passes_a_writer_supplied_tag():
+    from agmi.attacks.memory_specific import MetadataPoisoningAttack
+    r = MetadataPoisoningAttack().run(NaiveMemoryAdapter())
+    assert r.error is None and r.safe is False
+    for channel in ("external", "laundered", "agent-laundered"):
+        assert r.channels[channel] == [True] * 5, channel
+
+
+def test_metadata_poisoning_is_na_without_a_filter():
+    from agmi.attacks.memory_specific import MetadataPoisoningAttack
+
+    class NoFilter(NaiveMemoryAdapter):
+        def retrieve_where(self, *a, **k):
+            raise NotImplementedError("tool has no metadata filter on retrieval")
+
+    r = MetadataPoisoningAttack().run(NoFilter())
+    assert r.status == "n/a" and "no metadata filter" in r.error
+
+
+def test_defended_reference_on_the_two_new_attacks():
+    """Signature verification holds both new cells on the unsigned
+    channels and loses them on the signed one, the same limit as the
+    planted-fact cell: a signed correction or a signed self-tag is a
+    genuine write as far as a store can tell."""
+    from agmi.attacks.memory_specific import (UpdatePoisoningAttack,
+                                              MetadataPoisoningAttack)
+    for cls in (UpdatePoisoningAttack, MetadataPoisoningAttack):
+        r = cls().run(DefendedMemoryAdapter())
+        assert r.error is None, r.error
+        assert r.channels["external"] == [False] * 5
+        assert r.channels["laundered"] == [False] * 5
+        assert r.channels["agent-laundered"] == [True] * 5

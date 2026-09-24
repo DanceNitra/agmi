@@ -172,6 +172,14 @@ class LangGraphSqliteStoreAdapter(SemanticMemoryAdapter):
             ))
         return out
 
+    def retrieve_where(self, query: str, user_id: str, where: dict,
+                       k: int = 5) -> list[Retrieved]:
+        items = self._memory().search((NAMESPACE_ROOT, user_id), query=query,
+                                      filter=dict(where), limit=k)
+        return [Retrieved(text=str((it.value or {}).get("text", "")),
+                          user_id=str(it.namespace[1] if len(it.namespace) > 1 else ""),
+                          score=float(it.score or 0.0)) for it in items]
+
     def supports_users(self) -> bool:
         return True
 

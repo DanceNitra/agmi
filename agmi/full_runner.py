@@ -210,6 +210,8 @@ def full_scorecard() -> str:
         "reorder": "reord", "forge": "forge", "memory_injection": "inject",
         "cross_session_bleed": "bleed", "retrieval_hijack": "hijack",
         "indirect_prompt_injection": "promptInj",
+        "update_poisoning": "update",
+        "metadata_poisoning": "metadata",
     }
     cols = ["checkedAt"] + [short[n] for n in all_names]
     label_w = max(len(r[0]) for r in rows) + 1

@@ -56,5 +56,21 @@ class NaiveMemoryAdapter(SemanticMemoryAdapter):
         return [Retrieved(text=i.text, user_id=i.user_id, score=s)
                 for s, i in scored[:k]]
 
+    def retrieve_where(self, query: str, user_id: str, where: dict,
+                       k: int = 5) -> list[Retrieved]:
+        q = _tokens(query)
+        scored = []
+        for i in self._items:
+            if self.enforce_user_scope and i.user_id != user_id:
+                continue
+            if any(i.metadata.get(key) != val for key, val in where.items()):
+                continue
+            overlap = len(q & _tokens(i.text))
+            if overlap:
+                scored.append((overlap / (len(q) or 1), i))
+        scored.sort(key=lambda s: -s[0])
+        return [Retrieved(text=i.text, user_id=i.user_id, score=s)
+                for s, i in scored[:k]]
+
     def measured_on(self) -> str:
         return "reference store, token-overlap ranking, no defences"
