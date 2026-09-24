@@ -30,12 +30,17 @@ from agmi.attacks.memory_specific import ALL_MEMORY_ATTACKS, MemoryAttackResult
 
 
 def run_memory_attacks(adapter: SemanticMemoryAdapter,
-                       filler: int = 0) -> list[MemoryAttackResult]:
+                       filler: int = 0,
+                       mutate: bool = False) -> list[MemoryAttackResult]:
     """Run the four memory-specific attacks against one adapter, in
     catalogue order. Each attack resets the adapter itself. ``filler`` adds
-    that many unrelated genuine memories before every fixture, for the
-    scale tier."""
-    return [cls(filler=filler).run(adapter) for cls in ALL_MEMORY_ATTACKS]
+    that many unrelated genuine memories before every fixture (the scale
+    tier). ``mutate`` also runs each attacker write as its content-evasion
+    mutations, so a defence is scored under evasion, not just on the base
+    string."""
+    return [cls(filler=filler, mutate=mutate) for cls in ALL_MEMORY_ATTACKS] \
+        and [cls(filler=filler, mutate=mutate).run(adapter)
+             for cls in ALL_MEMORY_ATTACKS]
 
 
 def format_memory_row(label: str, results: list[MemoryAttackResult],
@@ -91,7 +96,8 @@ TARGETS: dict[str, Callable[[str], SemanticMemoryAdapter]] = {
 }
 
 
-def measure(target: str, embedder: str = "minilm", filler: int = 0):
+def measure(target: str, embedder: str = "minilm", filler: int = 0,
+            mutate: bool = False):
     """Build the adapter for ``target`` and run the family against it.
     Returns ``(results, measured_on)``. Adapters that hold resources are
     closed afterwards. ``filler`` seeds that many unrelated memories before
@@ -104,10 +110,12 @@ def measure(target: str, embedder: str = "minilm", filler: int = 0):
             f"{', '.join(sorted(TARGETS))}") from None
     adapter = factory(embedder)
     try:
-        results = run_memory_attacks(adapter, filler=filler)
+        results = run_memory_attacks(adapter, filler=filler, mutate=mutate)
         measured_on = adapter.measured_on()
         if filler:
             measured_on += f", {filler} filler memories before every fixture"
+        if mutate:
+            measured_on += ", each attacker write also run as its content-evasion mutations"
         return results, measured_on
     finally:
         close = getattr(adapter, "close", None)
@@ -130,9 +138,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--scale", type=int, default=0, metavar="N",
                         help="seed N unrelated memories before every "
                              "fixture (the scale tier); 0 is the default row")
+    parser.add_argument("--mutate", action="store_true",
+                        help="also run each attacker write as its "
+                             "content-evasion mutations")
     args = parser.parse_args(argv)
     try:
-        results, measured_on = measure(args.target, args.embedder, args.scale)
+        results, measured_on = measure(args.target, args.embedder, args.scale,
+                                       args.mutate)
     except NotImplementedError as exc:
         print(f"cannot measure: {exc}", file=sys.stderr)
         return 2

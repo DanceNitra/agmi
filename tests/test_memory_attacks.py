@@ -137,12 +137,19 @@ def test_provenance_alone_never_passes_a_content_cell():
         prompt = IndirectPromptInjectionAttack().run(DefendedMemoryAdapter())
     finally:
         dm.looks_like_instruction, dm.looks_stuffed = saved
+    # With the two write-time content checks off, provenance and the
+    # read-time query-word check are all that is left. External and
+    # laundered still hold (signature verification). On the signed channel
+    # the store must still lose ground: the hidden instruction has no
+    # read-time defence left and surfaces on most fixtures, and the hijack
+    # surfaces on at least one. If both held clean here, provenance would
+    # be passing a content cell again.
     assert hijack.channels["external"] == [False] * 5
     assert hijack.channels["laundered"] == [False] * 5
-    assert hijack.channels["agent-laundered"] == [True] * 5
     assert prompt.channels["external"] == [False] * 5
     assert prompt.channels["laundered"] == [False] * 5
     assert prompt.channels["agent-laundered"].count(True) >= 4
+    assert hijack.channels["agent-laundered"].count(True) >= 1
 
 
 def test_results_carry_the_attack_version_and_attacker_level():

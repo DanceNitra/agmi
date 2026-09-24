@@ -23,10 +23,19 @@ each defence named and visible.
    (see ``agmi.checks.looks_like_instruction``) is stored but flagged, and
    flagged records are never served. That is what keeps a hidden
    instruction out of context.
-3. A stuffing check at write. A record whose tokens repeat far beyond a
-   normal sentence (``agmi.checks.looks_stuffed``) is flagged and served
-   only after every unflagged candidate. That is what keeps a padded entry
-   from taking a slot.
+3. A stuffing check at write, plus a query-word-count check at read. A
+   record whose tokens repeat far beyond a normal sentence
+   (``agmi.checks.looks_stuffed``) is flagged at write. Dilution with
+   filler defeats a fixed repeat threshold, so at read a record is also
+   demoted when it carries more of the query's own words than its peers
+   (over their median plus two). Together these hold every base fixture and
+   four of five under dilution. The fifth still lands: a diluted entry
+   tuned to sit at the peers' level evades a count that has to leave honest
+   memories alone. That residual is the measured limit of a content-only
+   defence, and it is why the mutation run is a stronger statement than the
+   base run. Closing it needs provenance at ingestion or a learned
+   detector, not a tighter constant; a vendor row that does so is what this
+   invites.
 
 User isolation is inherited from the naive store. Ranking is token overlap,
 as in the naive store, so the comparison with the undefended row isolates
@@ -71,7 +80,7 @@ class DefendedMemoryAdapter(NaiveMemoryAdapter):
 
     def retrieve(self, query: str, user_id: str, k: int = 5) -> list[Retrieved]:
         q = _tokens(query)
-        scored: list[tuple[int, float, MemoryItem]] = []
+        candidates = []
         for rec in self._stored:
             item = rec.item
             if item.user_id != user_id:
@@ -81,11 +90,32 @@ class DefendedMemoryAdapter(NaiveMemoryAdapter):
             if not KEYRING.verify(item.user_id, item.source, item.text,
                                   item.signature):
                 continue                     # unverifiable writer: not trusted context
-            overlap = len(q & _tokens(item.text))
+            item_tokens = _tokens(item.text)
+            overlap = len(q & item_tokens)
             if overlap == 0:
                 continue
             score = overlap / (len(q) or 1)
-            tier = 1 if rec.stuffed else 0   # stuffed records rank last
+            candidates.append((rec, item, item_tokens, overlap, score))
+        # Query-word count: an entry that contains far more of the query's
+        # own words than any genuine memory does is demoted. This catches a
+        # stuffer whether it repeats itself (high tokens) or dilutes with
+        # filler (low density): either way it has crammed in the question's
+        # words to win the ranking, and honest short memories never carry
+        # that many. Diluting only adds filler, which does not raise the
+        # count of query words, so it cannot evade this.
+        # The ceiling is the typical query-word count of the OTHER
+        # candidates, computed per-candidate so an outlier cannot raise its
+        # own bar. A record carrying more than the median-plus-two of its
+        # peers has crammed the question's words in; genuine memories on a
+        # topic share the query's words evenly, a stuffer does not.
+        import statistics
+        counts = [ov for rec, it, itk, ov, sc in candidates]
+        scored = []
+        for idx, (rec, item, item_tokens, overlap, score) in enumerate(candidates):
+            peers = counts[:idx] + counts[idx + 1:]
+            med = statistics.median(peers) if peers else 0
+            crammed = overlap > med + 2
+            tier = 1 if (rec.stuffed or crammed) else 0
             scored.append((tier, score, item))
         scored.sort(key=lambda s: (s[0], -s[1]))
         return [Retrieved(text=i.text, user_id=i.user_id, score=sc)

@@ -1,6 +1,17 @@
 # Changelog
 
 ## Unreleased
+- Mutation engine (`agmi/mutations.py`, `--mutate`): every attacker write
+  is also run as its content-evasion mutations (paraphrase, homoglyph,
+  zero-width, case-flip, dilute), and a defence holds a cell only if it
+  holds on the base fixture and every mutation. It immediately found a hole
+  in agmi's own reference store: a fixed stuffing threshold that dilution
+  walks under. Replaced it with a read-time query-word-count check (an
+  entry carrying more of the query's words than its peers is demoted),
+  which holds every base fixture and four of five under dilution; the fifth
+  is recorded as the measured limit of a content-only defence, closed only
+  by ingestion provenance or a learned detector. Every mutation preserves
+  the verdict key, pinned by a test.
 - Three attacker channels on every front-door attack (external; laundered:
   forged "user" label, no key; agent-laundered: forged label with a valid
   signature), a tool kept out only when it holds on all three. Found by
