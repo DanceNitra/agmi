@@ -505,15 +505,24 @@ Two things keep the agent a security tool rather than an attack tool. An authori
 
 ## Roadmap
 
-| Version | Scope | Status |
+agmi is built in phases. Each phase ships with the measurement that
+proves it, and the scorecard columns follow the test method proposed
+for IETF draft-han-bmwg-agent-security-benchmark metric 5.4.7
+([bmwg list, 24 Sep 2026](https://mailarchive.ietf.org/arch/browse/bmwg/)).
+
+| Phase | Scope | Status |
 |---|---|---|
-| 0.1 | Attack catalogue, adapter interface, OpenFang model, naive baseline | done |
-| 0.2 to 0.5 | Real at-rest measurements for LangGraph, Letta and Mem0; licensing; CI | done |
-| 0.6 | Memory-specific attacks on real retrieval tools with real embedders (Mem0, LangGraph store, inspeximus and Letta archival measured; Graphiti next, then the 0.6.0 tag) | in progress |
-| 0.7 | Deserialization safety: crafted stored payloads that execute on load. Both LangGraph and Mem0 still unpickle from their stores, and one has patched a version of this before | planned |
-| 0.8 | In-flow attacks: replay, cross-thread poison, rollback during execution | planned |
-| 0.9 | Reference integrity layer: a hash chain in checkpoint metadata, offered upstream as an optional mode | planned |
-| 1.0 | Stable adapter interface, published conformance levels, monthly report cadence | planned |
+| 0.1 to 0.5 | Attack catalogue, adapter interface, five at-rest edits measured on LangGraph, Letta and Mem0; inspeximus rows from its maintainer, reproduced independently; preprint, software DOI, PyPI | done |
+| Phase 1 | Three attacker channels (external, laundered, agent-laundered), signed writes, attacker level on every cell; provenance alone can no longer pass a content cell | done |
+| Phase 2 | Mutation engine on every attacker write; update poisoning and metadata poisoning as attacks five and six; twelve-column scorecard on four real stores | done |
+| Memory agent, v1 | Hunt loop over six attacks, three channels and mutations; proof and reproduction script per finding; authorisation gate that fails closed | done |
+| 0.6.0 | Eight at-rest edits T1 to T8 (adds cross-context replay, rollback replay, metadata tamper) with control cases and read/audit detection points, matching the proposed 5.4.7 method; Graphiti as the fifth store; tagged release with a new software record | next |
+| Phase 3 | Live targets over HTTP (MCP memory servers, deployed LangGraph and Letta) behind the authorisation gate; obedience oracle that proves the agent acted on the poison; ingestion marking measured on each framework | planned |
+| Phase 4 | Memory agent driving content-only attacks through a real model, with the same proof discipline | planned |
+| 0.9 | Deserialization safety (stored payloads that execute on load) and a reference integrity layer: a hash chain over checkpoint ids, offered upstream as an optional mode | planned |
+| 1.0 | Stable adapter interface, published conformance levels, vendor badges, monthly report cadence; hosted runs through AuditTrax Labs, with the open benchmark free | planned |
+
+Standards position: the eight-edit method, verdict rules and control cases were sent to the IETF BMWG list as proposed text for metric 5.4.7 of draft-han-bmwg-agent-security-benchmark. If no revision takes it up, it will be filed as a companion Internet-Draft.
 
 ## Contributing, security, citation
 
