@@ -489,7 +489,17 @@ python -m agmi.agent --target defended        # a library target
 python -m agmi.agent --target mem0 --embedder minilm --json
 ```
 
-On the undefended reference it lands all five write-based attacks in nine attempts; on the defended reference it searches over a hundred and lands only on the signed channel, reaching for the dilution mutation on the hijack, the exact hole the mutation engine found. What "lands" means is the attacker's memory served back as trusted context for an innocent question, the tool-attributable step and the precondition for downstream harm; it is not the model obeying, which no portable suite can drive.
+On the undefended reference it lands all five write-based attacks in nine attempts; on the defended reference it searches over a hundred and lands only on the signed channel, reaching for the dilution mutation on the hijack, the exact hole the mutation engine found. Against the real tools it walks straight in:
+
+| Target | Attempts | Findings | Channel of every finding | Mutation needed |
+|---|---|---|---|---|
+| Mem0 local Qdrant store, all-MiniLM-L6-v2 | 5 | 5 | external | none |
+| LangGraph `SqliteStore`, all-MiniLM-L6-v2 | 5 | 5 | external | none |
+| inspeximus 3.0.0, default | 5 | 5 | external | none |
+| Letta archival memory, all-MiniLM-L6-v2 | 4 | 4 (no metadata filter, so that attack does not apply) | external | none |
+| reference-defended (model) | 131 | 4 | agent-laundered only | dilute, on the hijack |
+
+Measured 24 September 2026 on macOS arm64, Python 3.12. One attempt per attack means the first base fixture on the honest channel landed; nothing had to be disguised or laundered. The only target that made the agent search is the reference store, and the only channel it landed on there is the one no store can close. What "lands" means is the attacker's memory served back as trusted context for an innocent question, the tool-attributable step and the precondition for downstream harm; it is not the model obeying, which no portable suite can drive.
 
 Two things keep the agent a security tool rather than an attack tool. An authorisation gate (`agmi/agent/authz.py`) runs before any target is touched and fails closed: a library target the caller already holds is allowed, a network host is allowed only on proven control (a host-named environment token or a consent file the operator writes), and anything else raises before the hunt starts. And the search is deterministic and offline by default, so the same target yields the same findings and the agent makes no network calls of its own beyond the target adapter's. Live HTTP targets, and an obedience oracle that watches for a canary action the model takes only if it believed the poison, are the next tier.
 
