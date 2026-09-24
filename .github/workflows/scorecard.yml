@@ -29,6 +29,10 @@ jobs:
           PYTHONPATH: .
           MEM0_TELEMETRY: "false"
         run: python -m pytest tests/ -q -p no:warnings
+      - name: LangGraph encrypted-checkpointer replay (measured, not fatal)
+        env:
+          PYTHONPATH: .
+        run: python -m agmi.replay
       - name: Scorecard
         env:
           PYTHONPATH: .

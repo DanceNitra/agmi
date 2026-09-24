@@ -20,7 +20,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
-langgraph = ["langgraph-checkpoint-sqlite"]
+langgraph = ["langgraph-checkpoint-sqlite", "pycryptodome"]
 letta = ["letta", "asyncpg", "psycopg2-binary", "pgvector", "pgserver"]
 mem0 = ["mem0ai", "qdrant-client"]
 inspeximus = ["inspeximus[crypto]>=2.38.0"]
