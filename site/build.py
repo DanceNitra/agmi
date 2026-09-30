@@ -339,7 +339,7 @@ def load():
 
 def verdict_class(v):
     return {"accepted": "v-acc", "rejected": "v-rej", "reported": "v-rep", "surfaced": "v-acc",
-            "kept out": "v-rej", "n/a": "v-na"}.get(v, "v-na")
+            "kept out": "v-rej", "n/a": "v-na", "error": "v-na"}.get(v, "v-na")
 
 ATTACK_NAMES = {a: f"{t}, {n}" for a, t, n, _, _ in AT_REST}
 ATTACK_NAMES.update({a: n for a, n, _, _ in FRONT_DOOR})
@@ -551,7 +551,8 @@ def build():
   <dl class="legend"><dt class="v-acc">accepted</dt><dd>the tool loaded the altered store, raised nothing, and served the altered memory as true</dd>
   <dt class="v-rej">rejected</dt><dd>the tool refused the edit at read time</dd>
   <dt class="v-rep">reported</dt><dd>a separate audit call named the problem; the read path had already served the store</dd>
-  <dt class="v-na">n/a</dt><dd>not measurable on this store, or a control case failed, so no pass is recorded</dd></dl>
+  <dt class="v-na">n/a</dt><dd>not measurable on this store, or a control case failed, so no pass is recorded</dd>
+  <dt class="v-na">error</dt><dd>the edit did not land the way the attack intended (control C3), so the harness, not the tool, is at fault and no verdict exists</dd></dl>
   <h2>Front door</h2>
   {matrix(d, rows, fd_keys, fd_cols, "front")}
   <dl class="legend"><dt class="v-acc">surfaced</dt><dd>the attacker's memory came back from the read path as context for the agent on at least one of five scenarios</dd>
