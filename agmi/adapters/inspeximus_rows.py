@@ -231,8 +231,21 @@ class InspeximusRowsAdapter(MemoryAdapter):
         target = self._row_at(victim_seq)
         if target is None:
             raise RuntimeError("no victim row at that position")
+        # Genuine donor bytes (text, nonce, read-guard mac, timestamps) in
+        # the victim's slot: the victim keeps its id, key and owner, which
+        # is what "leaving B's identifiers in place" means for this store.
+        # Before this the donor's key and owner came along, so the edit
+        # was a key rename plus an owner move, not a replay (issue #5).
         doc = dict(donor.fields["doc"])
         doc["id"] = target["id"]
+        doc["key"] = target["doc"].get("key")
+        meta = dict(doc.get("meta") or {})
+        victim_uid = (target["doc"].get("meta") or {}).get("uid")
+        if victim_uid is None:
+            meta.pop("uid", None)
+        else:
+            meta["uid"] = victim_uid
+        doc["meta"] = meta
         conn = self._raw()
         try:
             conn.execute("UPDATE records SET doc = ? WHERE id = ?",
@@ -240,6 +253,26 @@ class InspeximusRowsAdapter(MemoryAdapter):
             conn.commit()
         finally:
             conn.close()
+
+    # --- guard hooks (control C3): slot, content, owner ------------------
+    #: Slot and label fields: the record's id and key name it, meta holds
+    #: its owner (uid) and the store's own read-guard mac, source/ts/iso/
+    #: last_access are its labels. Everything else is content.
+    META_KEYS = ("id", "key", "meta", "source", "ts", "iso", "last_access")
+
+    def identity_of(self, record):
+        return f"{record.fields['id']}:{record.fields['doc'].get('key')}"
+
+    def payload_of(self, record):
+        doc = record.fields["doc"]
+        body = {k: v for k, v in doc.items() if k not in self.META_KEYS}
+        return json.dumps(body, sort_keys=True, default=repr)
+
+    def owner_of(self, record):
+        # A record written with no user_id belongs to the store's default
+        # context; inspeximus serves it to every user by design.
+        uid = (record.fields["doc"].get("meta") or {}).get("uid")
+        return "default" if uid is None else str(uid)
 
     def read_meta(self, seq: int) -> dict:
         row = self._row_at(seq)

@@ -170,6 +170,16 @@ class LlamaIndexMemoryAdapter(MemoryAdapter):
         conn.commit()
         conn.close()
 
+    # --- guard hooks (control C3): slot, content, owner ------------------
+    def identity_of(self, record):
+        return str(record.fields["id"])
+
+    def payload_of(self, record):
+        return str(record.fields["data"])
+
+    def owner_of(self, record):
+        return str(record.fields["key"])
+
     def read_meta(self, seq: int) -> dict:
         r = self.read_all_raw()[seq].fields
         return {"key": r["key"], "timestamp": r["timestamp"], "role": r["role"], "status": r["status"]}

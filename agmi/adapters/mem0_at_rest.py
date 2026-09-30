@@ -117,14 +117,33 @@ class Mem0AtRestAdapter(MemoryAdapter):
         return out
 
     def write_raw(self, record: Record) -> None:
+        """Write the record's text into the slot at ordinal `record.seq`.
+
+        Mem0 orders points by its history log, not by anything in the
+        point, so a record whose seq names another point's slot (the
+        reorder edit) lands its text in THAT point, keeping that point's
+        id and user. Before this, the write went back to the record's own
+        id and the reorder edit changed nothing; the landed guard caught
+        it (issue #5)."""
         f = record.fields
+        order = self._order()
         point = f["point"]
+        target_id = f["id"]
+        if record.seq < len(order) and order[record.seq] != f["id"]:
+            target_id = order[record.seq]
+            conn = sqlite3.connect(self._points_db)
+            row = conn.execute("SELECT point FROM points WHERE id = ?",
+                               (self._key(target_id),)).fetchone()
+            conn.close()
+            if row is None:
+                raise RuntimeError("no point at that position")
+            point = pickle.loads(row[0])
         point.payload["data"] = f["text"]
         point.payload["text_lemmatized"] = f["text"]
         conn = sqlite3.connect(self._points_db)
         conn.execute("INSERT INTO points (id, point) VALUES (?, ?) "
                      "ON CONFLICT(id) DO UPDATE SET point = excluded.point",
-                     (self._key(f["id"]), pickle.dumps(point)))
+                     (self._key(target_id), pickle.dumps(point)))
         conn.commit()
         conn.close()
 
@@ -202,6 +221,16 @@ class Mem0AtRestAdapter(MemoryAdapter):
                      (self._key(victim["id"]), pickle.dumps(point)))
         conn.commit()
         conn.close()
+
+    # --- guard hooks (control C3): slot, content, owner ------------------
+    def identity_of(self, record):
+        return str(record.fields["id"])
+
+    def payload_of(self, record):
+        return str(record.fields["text"])
+
+    def owner_of(self, record):
+        return str(record.fields["point"].payload.get("user_id"))
 
     def read_meta(self, seq: int) -> dict:
         recs = self.read_all_raw()

@@ -55,6 +55,8 @@ def load_adapter(spec: str) -> MemoryAdapter:
 
 
 def verdict(result: AttackResult, adapter: MemoryAdapter) -> str:
+    if result.guard is not None:
+        return "ERROR"
     if result.error is not None:
         return "NOT EVALUABLE"
     if not result.detected:
@@ -74,7 +76,7 @@ def run(adapter: MemoryAdapter) -> list[dict]:
             "attack": attack.name,
             "attack_version": attack.version,
             "verdict": verdict(result, adapter),
-            "detail": result.error or result.detail or "",
+            "detail": result.guard or result.error or result.detail or "",
         })
     return rows
 
@@ -103,6 +105,8 @@ def gha_report(tool: str, rows: list[dict]) -> None:
                   f"memory as genuine with no signal")
         elif r["verdict"] == "NOT EVALUABLE":
             print(f"::warning title=agmi {r['edit']}::{r['detail']}")
+        elif r["verdict"] == "ERROR":
+            print(f"::error title=agmi {r['edit']}::harness error, {r['detail']}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -130,6 +134,13 @@ def main(argv: list[str] | None = None) -> int:
 
     accepted = [r for r in rows if r["verdict"] == "ACCEPTED"]
     not_eval = [r for r in rows if r["verdict"] == "NOT EVALUABLE"]
+    errors = [r for r in rows if r["verdict"] == "ERROR"]
+    if errors:
+        # An edit that did not land is the harness's fault, not the
+        # store's. Never a pass, so the job stops here with its own code.
+        print(f"agmi-check: {len(errors)} edit(s) did not land; fix the "
+              f"adapter before reading any verdict", file=sys.stderr)
+        return 3
     if not_eval and len(not_eval) == len(rows):
         print("agmi-check: no edit could be evaluated", file=sys.stderr)
         return 2

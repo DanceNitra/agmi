@@ -31,18 +31,19 @@ EXPECTED = {
     InspeximusDefaultAdapter: {"tamper": False, "truncate": False, "delete_middle": False,
                                "reorder": False, "forge": False,
                                # receipts off: the read path checks nothing.
-                               "cross_replay": False, "rollback_replay": False,
+                               # cross_replay is ERROR until the victim pool is
+                               # scoped to the first context (issue #5): the
+                               # landed guard refuses to score a no-op.
+                               "cross_replay": "ERROR", "rollback_replay": False,
                                "metadata_tamper": False},
     InspeximusRowsSidecarAdapter: {"tamper": True, "truncate": True, "delete_middle": True,
                                    "reorder": True, "forge": True,
-                                   # receipts catch rollback and metadata, but NOT
-                                   # cross-context replay: a receipt binds text and
-                                   # key, not which user a record belongs to.
-                                   "cross_replay": False, "rollback_replay": True,
+                                   # cross_replay: see the default row (issue #5).
+                                   "cross_replay": "ERROR", "rollback_replay": True,
                                    "metadata_tamper": True},
     InspeximusRowsSidecarHeadAdapter: {"tamper": True, "truncate": False, "delete_middle": True,
                                        "reorder": True, "forge": True,
-                                       "cross_replay": False, "rollback_replay": True,
+                                       "cross_replay": "ERROR", "rollback_replay": True,
                                        "metadata_tamper": True},
 }
 
@@ -57,7 +58,13 @@ def test_the_scorecard_row_is_as_measured(adapter_cls):
     results = _run_all(adapter_cls)
     assert set(results) == set(expected)
     for name, r in results.items():
+        if expected[name] == "ERROR":
+            assert r.status == "ERROR", (
+                f"{adapter_cls.name}/{name}: expected the landed guard to fire, "
+                f"got {r.status}; if the edit now lands, pin the real verdict")
+            continue
         assert r.error is None, f"{adapter_cls.name}/{name} errored: {r.error}"
+        assert r.guard is None, f"{adapter_cls.name}/{name} did not land: {r.guard}"
         assert r.detected == expected[name], (
             f"{adapter_cls.name}/{name}: expected detected={expected[name]}, got {r.detected}; "
             f"re-measure and update the scorecard (last measured on {MEASURED_ON}, "

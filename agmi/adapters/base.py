@@ -112,6 +112,38 @@ class MemoryAdapter(ABC):
         forged = Record(seq=template.seq + 1, fields=dict(template.fields))
         return self.mutate_payload(forged)
 
+    # --- optional hooks for the edit-landed guard (control C3) ----------
+    # Every at-rest attack snapshots the store before and after its edit
+    # and checks that the edit landed as intended (see agmi.attacks.guard).
+    # These three hooks tell the guard what a record's slot, content and
+    # owner are. The defaults suit row-per-entry stores whose fields carry
+    # an "id" column; adapters that model a second context override all
+    # three, since the replay checks depend on them.
+
+    #: Field names that name a record's slot rather than its content.
+    POSITION_KEYS: tuple[str, ...] = ("id", "seq", "ord", "sequence_number",
+                                      "position", "checkpoint_id", "hash",
+                                      "prev_hash")
+
+    def identity_of(self, record: Record) -> str:
+        """The slot a record occupies: what replay keeps and content edits
+        leave alone."""
+        rid = record.fields.get("id")
+        return str(rid if rid is not None else record.seq)
+
+    def payload_of(self, record: Record) -> str:
+        """The record's content, as a string, with position fields left
+        out. Two records with the same payload say the same thing."""
+        import json as _json
+        body = {k: v for k, v in record.fields.items()
+                if k not in self.POSITION_KEYS}
+        return _json.dumps(body, sort_keys=True, default=repr)
+
+    def owner_of(self, record: Record) -> str | None:
+        """The context (thread, user, session) a record belongs to, or
+        None when the store has no such notion."""
+        return None
+
     # --- optional hooks for the replay and metadata attacks (T6-T8) ---
     # T6 (cross-context replay), T7 (rollback replay) and T8 (metadata
     # tamper) need three things the five basic attacks do not: a SECOND

@@ -41,6 +41,8 @@ def _verdict(status: str, memory_attack: bool, point) -> str:
     served the edit as genuine). Front door: surfaced, kept out."""
     if status == "n/a":
         return "n/a"
+    if status == "ERROR":
+        return "error"
     if memory_attack:
         return "kept out" if status == "safe" else "surfaced"
     if status == "reported":
@@ -189,7 +191,7 @@ def full_scorecard() -> str:
                 if status == "safe" and point == "audit":
                     status = "reported"
                 cells[(label, atk.name)] = status
-                details[(label, atk.name)] = res.detail or res.error or ""
+                details[(label, atk.name)] = getattr(res, "guard", None) or res.detail or res.error or ""
         else:
             for atk in at_rest:
                 cells[(label, atk.name)] = "n/a"
@@ -198,7 +200,7 @@ def full_scorecard() -> str:
             for atk in mem:
                 res = atk.run(sm_ad)
                 cells[(label, atk.name)] = res.status
-                details[(label, atk.name)] = res.detail or res.error or ""
+                details[(label, atk.name)] = getattr(res, "guard", None) or res.detail or res.error or ""
             measured_on[label] = sm_ad.measured_on()
             sm_ad.close()
         else:

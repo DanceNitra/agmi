@@ -129,6 +129,16 @@ class ReferenceAtRestAdapter(MemoryAdapter):
         c.commit()
         c.close()
 
+    # --- guard hooks (control C3): slot, content, owner ------------------
+    def identity_of(self, record):
+        return f"{record.fields['ctx']}:{record.fields['seq']}"
+
+    def payload_of(self, record):
+        return str(record.fields["content"])
+
+    def owner_of(self, record):
+        return str(record.fields["ctx"])
+
     def read_meta(self, seq: int) -> dict:
         c = self._raw()
         row = c.execute("SELECT meta FROM rec WHERE ctx=? AND seq=?",

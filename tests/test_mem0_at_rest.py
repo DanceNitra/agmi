@@ -25,7 +25,13 @@ def test_mem0_accepts_every_at_rest_tamper():
     # row records.
     for cls in ALL_AT_REST_ATTACKS:
         r = cls().run(Mem0AtRestAdapter())
+        if r.attack == "cross_replay":
+            # ERROR until the victim pool is scoped to the seeded user
+            # (issue #5): the landed guard refuses to score a no-op.
+            assert r.status == "ERROR", f"cross_replay: {r.status} {r.guard}"
+            continue
         assert r.error is None, f"{r.attack} errored: {r.error}"
+        assert r.guard is None, f"{r.attack} did not land: {r.guard}"
         assert not r.detected, (
             f"{r.attack}: Mem0 now detects this. Re-measure and update the "
             f"scorecard (last measured on {MEASURED_ON}, now "

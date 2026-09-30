@@ -217,6 +217,18 @@ class LangGraphSqliteAdapter(MemoryAdapter):
         conn.commit()
         conn.close()
 
+    # --- guard hooks (control C3): slot, content, owner ------------------
+    def identity_of(self, record):
+        return str(record.fields["checkpoint_id"])
+
+    def payload_of(self, record):
+        blob = record.fields["checkpoint"]
+        blob = blob.hex() if isinstance(blob, (bytes, bytearray)) else str(blob)
+        return f"{record.fields['type']}:{blob}"
+
+    def owner_of(self, record):
+        return str(record.fields["thread_id"])
+
     def read_meta(self, seq: int) -> dict:
         import json
         recs = self.read_all_raw()

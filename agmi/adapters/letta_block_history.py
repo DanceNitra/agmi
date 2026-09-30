@@ -286,6 +286,16 @@ class LettaBlockHistoryAdapter(MemoryAdapter):
         conn.commit()
         conn.close()
 
+    # --- guard hooks (control C3): slot, content, owner ------------------
+    def identity_of(self, record):
+        return str(record.fields["id"])
+
+    def payload_of(self, record):
+        return str(record.fields["value"])
+
+    def owner_of(self, record):
+        return str(record.fields["block_id"])
+
     def read_meta(self, seq: int) -> dict:
         recs = self.read_all_raw()
         f = recs[seq].fields

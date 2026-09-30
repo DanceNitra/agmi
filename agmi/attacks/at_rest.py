@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Yasha Khandelwal <yasha.khandelwal@tech4biz.io>
 # SPDX-License-Identifier: MIT
 
-"""The five at-rest attacks.
+"""The eight at-rest attacks, each with its landed check (control C3).
 
 All five assume the attacker has gained write access to the backing store
 (the SQLite file, the Postgres rows, the JSON blob) but NOT access to the
@@ -18,6 +18,9 @@ from __future__ import annotations
 
 from agmi.adapters.base import MemoryAdapter
 from agmi.attacks.base import Attack
+from agmi.attacks.guard import (
+    Snap, changed_positions, expect, same_records, snapshot,
+)
 
 
 class TamperAttack(Attack):
@@ -31,8 +34,18 @@ class TamperAttack(Attack):
         if not records:
             raise RuntimeError("no records to tamper with")
         target = records[len(records) // 2]
+        self._ctx["pos"] = len(records) // 2
         # The adapter knows how to change meaning without breaking encoding.
         adapter.write_raw(adapter.mutate_payload(target))
+
+    def check_landed(self, adapter, before, after):
+        pos = self._ctx["pos"]
+        moved = changed_positions(before, after)
+        expect(moved == [pos], f"expected only record {pos} to change, changed {moved}")
+        expect(before[pos].payload != after[pos].payload,
+               f"record {pos} was rewritten but its content did not change")
+        expect(before[pos].identity == after[pos].identity,
+               f"record {pos} lost its identity")
 
 
 class TruncateAttack(Attack):
@@ -54,6 +67,12 @@ class TruncateAttack(Attack):
         for rec in reversed(records[-2:]):
             adapter.delete_raw(rec.seq)
 
+    def check_landed(self, adapter, before, after):
+        expect(len(after) == len(before) - 2,
+               f"expected {len(before) - 2} records after truncation, found {len(after)}")
+        expect(same_records(before[:-2], after),
+               "records that should have survived the truncation changed")
+
 
 class DeleteMiddleAttack(Attack):
     """Remove a single entry from the MIDDLE of the chain."""
@@ -66,7 +85,15 @@ class DeleteMiddleAttack(Attack):
         if len(records) < 3:
             raise RuntimeError("need at least 3 records to delete a middle one")
         victim = records[len(records) // 2]
+        self._ctx["pos"] = len(records) // 2
         adapter.delete_raw(victim.seq)
+
+    def check_landed(self, adapter, before, after):
+        pos = self._ctx["pos"]
+        expect(len(after) == len(before) - 1,
+               f"expected {len(before) - 1} records after the delete, found {len(after)}")
+        expect(same_records(before[:pos] + before[pos + 1:], after),
+               f"a record other than {pos} changed or the wrong record was removed")
 
 
 class ReorderAttack(Attack):
@@ -84,8 +111,20 @@ class ReorderAttack(Attack):
         a_seq = a.seq
         b_seq = b.seq
         a.seq, b.seq = b_seq, a_seq
+        self._ctx["pos"] = i
         adapter.write_raw(a)
         adapter.write_raw(b)
+
+    def check_landed(self, adapter, before, after):
+        i = self._ctx["pos"]
+        moved = changed_positions(before, after)
+        expect(sorted(moved) == [i - 1, i],
+               f"expected only records {i - 1} and {i} to change, changed {moved}")
+        expect(before[i - 1].payload != before[i].payload,
+               "the two records to swap carry the same content, so a swap is a no-op")
+        expect(after[i - 1].payload == before[i].payload
+               and after[i].payload == before[i - 1].payload,
+               f"records {i - 1} and {i} changed but did not exchange content")
 
 
 class ForgeAttack(Attack):
@@ -99,6 +138,14 @@ class ForgeAttack(Attack):
         if not records:
             raise RuntimeError("no records to base a forgery on")
         adapter.write_raw(adapter.forge_record(records[-1]))
+
+    def check_landed(self, adapter, before, after):
+        expect(len(after) == len(before) + 1,
+               f"expected exactly one new record, count went {len(before)} to {len(after)}")
+        expect(same_records(before, after[:-1]),
+               "the existing records changed; a forgery must only append")
+        expect(after[-1].payload != before[-1].payload,
+               "the appended record repeats the last genuine record")
 
 
 class CrossContextReplayAttack(Attack):
@@ -127,7 +174,38 @@ class CrossContextReplayAttack(Attack):
         victims = adapter.read_all_raw()
         if not donors or not victims:
             raise RuntimeError("need records in both contexts to replay")
+        self._ctx["donor"] = snapshot(adapter, [donors[-1]])[0]
+        self._ctx["donors"] = snapshot(adapter, donors)
+        # The victim pool is read after seed_other, so the guard compares
+        # against that, not the snapshot taken before the second context.
+        self._ctx["victims"] = snapshot(adapter, victims)
         adapter.replay_onto(victims[-1].seq, donors[-1])
+
+    def check_landed(self, adapter, before, after):
+        victims: list[Snap] = self._ctx["victims"]
+        donor: Snap = self._ctx["donor"]
+        expect(same_records(before, victims),
+               "seeding the second context changed the first context's records")
+        expect(all(v.identity != donor.identity for v in victims),
+               "the donor is one of the victim records: no crossing")
+        expect(donor.payload not in {v.payload for v in victims},
+               "the donor's content already sits in the first context: no crossing")
+        expect(donor.owner is not None and victims[-1].owner is not None,
+               "adapter does not report record owners, so a crossing cannot be proven")
+        expect(donor.owner != victims[-1].owner,
+               f"donor and victim share owner {donor.owner!r}: no crossing")
+        moved = changed_positions(victims, after)
+        last = len(victims) - 1
+        expect(moved == [last], f"expected only record {last} to change, changed {moved}")
+        expect(after[last].identity == victims[last].identity,
+               "the victim slot lost its identity; a replay keeps it")
+        expect(after[last].owner == victims[last].owner,
+               "the victim slot changed owner; a replay keeps it")
+        expect(after[last].payload == donor.payload,
+               "the victim slot does not hold the donor's content")
+        others = snapshot(adapter, adapter.read_other_raw())
+        expect(same_records(self._ctx["donors"], others),
+               "the second context changed; only the victim slot may move")
 
 
 class RollbackReplayAttack(Attack):
@@ -154,6 +232,20 @@ class RollbackReplayAttack(Attack):
             raise RuntimeError("need at least 2 records to roll back")
         adapter.replay_onto(records[-1].seq, records[0])
 
+    def check_landed(self, adapter, before, after):
+        last = len(before) - 1
+        expect(last >= 1, "need at least 2 records to roll back")
+        expect(before[0].payload != before[last].payload,
+               "oldest and newest records carry the same content: a rollback is a no-op")
+        moved = changed_positions(before, after)
+        expect(moved == [last], f"expected only record {last} to change, changed {moved}")
+        expect(after[last].identity == before[last].identity,
+               "the newest slot lost its identity; a replay keeps it")
+        expect(after[last].owner == before[last].owner,
+               "the newest slot changed owner; a rollback stays inside one context")
+        expect(after[last].payload == before[0].payload,
+               "the newest slot does not hold the oldest record's content")
+
 
 class MetadataTamperAttack(Attack):
     """T8. Change a record's metadata (owner, source, role, timestamp) and
@@ -178,9 +270,30 @@ class MetadataTamperAttack(Attack):
         if not records:
             raise RuntimeError("no records to tamper metadata on")
         seq = records[len(records) // 2].seq
+        self._ctx["pos"] = len(records) // 2
+        self._ctx["meta_before"] = dict(adapter.read_meta(seq))
         meta = adapter.read_meta(seq)
         meta["agmi_meta_tampered"] = True
         adapter.write_meta(seq, meta)
+        self._ctx["meta_after"] = dict(adapter.read_meta(seq))
+
+    def check_landed(self, adapter, before, after):
+        pos = self._ctx["pos"]
+        expect(self._ctx["meta_before"] != self._ctx["meta_after"],
+               f"record {pos}'s metadata reads back unchanged after the write")
+        if len(after) == len(before) - 1:
+            # The edit moved the record to another owner, and the first
+            # context's view no longer lists it. Everything else must stand.
+            expect(same_records(before[:pos] + before[pos + 1:], after),
+                   f"record {pos} left the context but other records changed too")
+            return
+        moved = changed_positions(before, after)
+        expect(moved in ([pos], []),
+               f"expected only record {pos} to change, changed {moved}")
+        expect(after[pos].payload == before[pos].payload,
+               f"record {pos}'s content changed; a metadata edit leaves it alone")
+        expect(after[pos].identity == before[pos].identity,
+               f"record {pos} lost its identity")
 
 
 ALL_AT_REST_ATTACKS: list[type[Attack]] = [

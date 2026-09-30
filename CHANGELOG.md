@@ -2,6 +2,11 @@
 
 ## Unreleased (0.6.1)
 
+- Control C3, the landed guard: every at-rest attack now snapshots the store before and after its edit and proves the change is the one it intended, per edit (T1 to T8), before any verdict is taken. An edit that does not land is an `error` cell, never a pass or a fail; `agmi-check` exits 3 on it. Three adapter hooks feed it: `identity_of`, `payload_of`, `owner_of`. New tests `tests/test_guard.py` run every attack on a plain store and every no-op the guard must catch.
+- Found by the guard, reported first by the inspeximus maintainer in issue #5: the T6 cross-context replay on the inspeximus and Mem0 rows was a no-op at 11b1d87 (`read_all_raw()` returned both contexts, so the donor was copied onto itself). Those cells now read `error` until the victim pool is scoped to the first context (his PR). The earlier README line that inspeximus receipts do not bind the owning user rested on that no-op and is withdrawn; with the pool scoped, both receipt rows report T6.
+- Also found by the guard: the T4 reorder on the Mem0 row was a no-op (`write_raw` wrote each point back under its own id, ignoring the slot). `write_raw` now writes into the slot the record's `seq` names; the Mem0 T4 verdict stays accepted, now on a real edit.
+- inspeximus `replay_onto` now keeps the victim's key and owner and takes only the donor's genuine bytes, which is what "leaving B's identifiers in place" means for that store; before, the donor's key and owner came along, an owner move rather than a replay.
+
 - New at-rest row: OpenAI Agents SDK `SQLiteSession` (openai-agents 0.20.0). Accepts all eight edits T1 to T8. Adapter `agmi/adapters/openai_agents_session.py`, pinned tests `tests/test_openai_agents_session.py`, extra `openai-agents`.
 - New at-rest row: LlamaIndex `Memory` on its SQLAlchemy chat store (llama-index-core 0.14.24). Accepts all eight edits. Adapter `agmi/adapters/llamaindex_memory.py`, pinned tests `tests/test_llamaindex_memory.py`, extra `llamaindex`.
 - Site: design guide, per-edit explainers with live rows, memory agent page, animated diagrams, proposed conformance levels.

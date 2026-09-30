@@ -19,6 +19,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from agmi.adapters.base import MemoryAdapter
+from agmi.attacks.guard import GuardFailed, Snap, snapshot
 
 
 @dataclass
@@ -45,9 +46,15 @@ class AttackResult:
     version: int = 1
     #: Who the attacker is: "store-access" (edits the files) here.
     attacker: str = "store-access"
+    #: Set when the edit did not land as intended (control C3 failed). The
+    #: cell is an ERROR: the harness, not the tool, is at fault, and no
+    #: verdict exists for it.
+    guard: str | None = None
 
     @property
     def status(self) -> str:
+        if self.guard is not None:
+            return "ERROR"
         if self.error is not None:
             return "n/a"
         return "safe" if self.detected else "VULNERABLE"
@@ -66,6 +73,10 @@ class Attack(ABC):
     #: Attack definition version. Bump when the fixture or the verdict rule
     #: changes; results and reports carry it.
     version: int = 1
+
+    def __init__(self) -> None:
+        #: What tamper() decided (which slot, which donor), for check_landed.
+        self._ctx: dict = {}
 
     def run(self, adapter: MemoryAdapter) -> AttackResult:
         """Full attack lifecycle against one adapter. Never raises: any
@@ -94,7 +105,21 @@ class Attack(ABC):
                            + self._why(adapter)),
                     version=self.version,
                 )
+            # Control 3: the edit must land as intended. Snapshot before
+            # and after, and let the attack check the difference against
+            # its own intent. A no-op or a misplaced edit is an ERROR
+            # cell, never a pass or a fail (see agmi.attacks.guard).
+            self._ctx = {}
+            before = snapshot(adapter, adapter.read_all_raw())
             self.tamper(adapter)
+            after = snapshot(adapter, adapter.read_all_raw())
+            try:
+                self.check_landed(adapter, before, after)
+            except GuardFailed as gf:
+                return AttackResult(
+                    self.name, adapter.name, detected=False,
+                    guard=f"edit did not land: {gf}", version=self.version,
+                )
             adapter.reload()
             detected = not adapter.verify()
             return AttackResult(
@@ -116,6 +141,13 @@ class Attack(ABC):
     @abstractmethod
     def tamper(self, adapter: MemoryAdapter) -> None:
         """Perform this attack's specific mutation on the raw store."""
+
+    def check_landed(self, adapter: MemoryAdapter, before: list[Snap],
+                     after: list[Snap]) -> None:
+        """Raise GuardFailed unless the store changed exactly the way this
+        attack intended. Every attack overrides this; the default refuses
+        to score at all, so a new attack cannot skip the control."""
+        raise GuardFailed(f"{self.name} defines no landed check")
 
     def detail_on(self, detected: bool) -> str:
         return "detected on reload" if detected else "accepted silently"

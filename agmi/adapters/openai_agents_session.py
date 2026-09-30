@@ -184,6 +184,16 @@ class OpenAIAgentsSessionAdapter(MemoryAdapter):
         conn.commit()
         conn.close()
 
+    # --- guard hooks (control C3): slot, content, owner ------------------
+    def identity_of(self, record):
+        return str(record.fields["id"])
+
+    def payload_of(self, record):
+        return str(record.fields["message_data"])
+
+    def owner_of(self, record):
+        return str(record.fields["session_id"])
+
     def read_meta(self, seq: int) -> dict:
         r = self.read_all_raw()[seq].fields
         return {"session_id": r["session_id"], "created_at": r["created_at"]}

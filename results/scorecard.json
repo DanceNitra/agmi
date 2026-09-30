@@ -1,5 +1,5 @@
 {
-  "date": "2026-09-26",
+  "date": "2026-09-30",
   "platform": "Darwin arm64, Python 3.12",
   "attack_versions": {
     "tamper": 1,
@@ -604,9 +604,9 @@
           "detail": "accepted silently"
         },
         "cross_replay": {
-          "status": "VULNERABLE",
-          "verdict": "accepted",
-          "detail": "accepted silently"
+          "status": "ERROR",
+          "verdict": "error",
+          "detail": "edit did not land: seeding the second context changed the first context's records"
         },
         "rollback_replay": {
           "status": "VULNERABLE",
@@ -681,9 +681,9 @@
           "detail": "accepted silently"
         },
         "cross_replay": {
-          "status": "VULNERABLE",
-          "verdict": "accepted",
-          "detail": "accepted silently"
+          "status": "ERROR",
+          "verdict": "error",
+          "detail": "edit did not land: seeding the second context changed the first context's records"
         },
         "rollback_replay": {
           "status": "VULNERABLE",
@@ -735,7 +735,7 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 8720a05007: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory 4261da1656: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
         },
         "truncate": {
           "status": "reported",
@@ -750,27 +750,27 @@
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 23c6cdd9d7: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 78da2421d9: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "forge": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0bf96e004']. They were inserted out of band, or written )"
+          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f010dc997d']. They were inserted out of band, or written )"
         },
         "cross_replay": {
-          "status": "VULNERABLE",
-          "verdict": "accepted",
-          "detail": "accepted silently"
+          "status": "ERROR",
+          "verdict": "error",
+          "detail": "edit did not land: seeding the second context changed the first context's records"
         },
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory b7afe8db9d: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 4a480343c2: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 3294b9a8a9: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory c13d121509: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
         },
         "memory_injection": {
           "status": "n/a",
@@ -812,7 +812,7 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory f4d6323f6f: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory 7492fe79cf: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
         },
         "truncate": {
           "status": "VULNERABLE",
@@ -827,27 +827,27 @@
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 2897548f2b: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory d3c5022925: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "forge": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0b8dfaad1']. They were inserted out of band, or written )"
+          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f049765241']. They were inserted out of band, or written )"
         },
         "cross_replay": {
-          "status": "VULNERABLE",
-          "verdict": "accepted",
-          "detail": "accepted silently"
+          "status": "ERROR",
+          "verdict": "error",
+          "detail": "edit did not land: seeding the second context changed the first context's records"
         },
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory cc1b24ad22: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 663c297aef: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 8ff6917341: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory a95c22d416: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
         },
         "memory_injection": {
           "status": "n/a",
