@@ -33,7 +33,7 @@ def read(p, cfg):
     try:
         return "served " + str(g.get_state(cfg).values)
     except Exception as e:
-        return "RAISED " + type(e).__name__
+        return "RAISED " + type(e).__name__ + (": " + str(e)[:40] if type(e).__name__ == "ValueError" else "")
 
 def cut(p, h1):
     c = sqlite3.connect(p)
@@ -72,3 +72,27 @@ old = c.execute("select type,checkpoint from checkpoints where thread_id='t' and
 c.execute("update checkpoints set type=?,checkpoint=? where thread_id='t' and checkpoint_id=?", (old[0], old[1], h2))
 c.commit(); c.close()
 print("8 head overwritten, id kept  :", read(p, anchored(h2)))
+
+# ---- async path (AsyncSqliteSaver), same head deletion ----
+import asyncio, aiosqlite
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+
+async def _agraph(path):
+    conn = await aiosqlite.connect(path)
+    sv = AsyncSqliteSaver(conn, serde=EncryptedSerializer.from_pycryptodome_aes(key=KEY))
+    g = StateGraph(S); g.add_node("n", node); g.add_edge(START, "n"); g.add_edge("n", END)
+    return conn, g.compile(checkpointer=sv)
+
+async def _async_case_c():
+    p = tempfile.mktemp(suffix=".db"); conn, g = await _agraph(p); cfg = {"configurable": {"thread_id": "t"}}
+    await g.ainvoke({"approved": False}, cfg); h1 = (await g.aget_state(cfg)).config["configurable"]["checkpoint_id"]
+    await g.ainvoke({"approved": True}, cfg); h2 = (await g.aget_state(cfg)).config["configurable"]["checkpoint_id"]
+    await conn.close(); cut(p, h1); conn, g = await _agraph(p)
+    print("9 async, head deleted, no anchor:", "served", (await g.aget_state(cfg)).values)
+    try:
+        print("10 async, head deleted, anchor  :", "served", (await g.aget_state(anchored(h2))).values)
+    except Exception as e:
+        print("10 async, head deleted, anchor  : RAISED", type(e).__name__)
+    await conn.close()
+
+asyncio.run(_async_case_c())
