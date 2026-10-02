@@ -68,6 +68,8 @@ ROW_NAMES = {
     "acrf-memory-guard": ("acrf-memory-guard, per-entry HMAC over a JSON store", "acrf-memory-guard 0.1.0"),
     "langgraph-ledger": ("langgraph-ledger over SqliteSaver, hash-chained ledger, verify_thread audit", "langgraph-ledger 0.3.0"),
     "memory-blackbox-md": ("memory-blackbox memory.md watcher, agent process alive, scan audit", "memory-blackbox 0.1.0"),
+    "atelya-attest-chain": ("Atelya Attest, keyed hash chain, verify_chain audit", "atelya-attest 0.1.1"),
+    "atelya-attest-chain+anchor": ("Atelya Attest, keyed hash chain plus anchored head, verify and consistency audit", "atelya-attest 0.1.1"),
     "letta-block-history": ("Letta block checkpoint history", "letta 0.16.8"),
     "letta-archival": ("Letta archival memory", "letta 0.16.8"),
     "mem0-qdrant-local": ("Mem0 local Qdrant store", "mem0ai 2.0.20"),
@@ -446,7 +448,7 @@ def build():
     d_date, d_platform = d["date"], d["platform"]
     at_rest_keys = [k for k in ["openfang(model,fixed)", "langgraph-sqlite", "openai-agents-sqlite-session", "llamaindex-memory-sqlite", "letta-block-history",
                                 "mem0-qdrant-local", "inspeximus-default", "inspeximus-rcpt+dir",
-                                "inspeximus-rcpt+dir+home", "langgraph-ledger", "memory-blackbox-md", "acrf-memory-guard"] if k in rows]
+                                "inspeximus-rcpt+dir+home", "langgraph-ledger", "memory-blackbox-md", "atelya-attest-chain", "atelya-attest-chain+anchor", "acrf-memory-guard"] if k in rows]
     fd_keys = [k for k in ["langgraph-sqlite-store", "letta-archival", "mem0-qdrant-local",
                            "inspeximus-default", "inspeximus-defended", "inspeximus-defended-key",
                            "naive-mem(scoped)", "naive-mem(unscoped)", "reference-defended(model)"] if k in rows]
@@ -724,6 +726,7 @@ Zenodo. https://doi.org/10.5281/zenodo.22860886</code></pre>
 <dt>LlamaIndex</dt><dd>Memory on the SQLAlchemy chat store. All eight edits accepted; <a href="https://github.com/run-llama/llama_index/issues/23246">#23246</a> is open, with a community documentation note in review.</dd>
 <dt>langgraph-ledger</dt><dd>A hash-chained JSONL ledger beside any LangGraph checkpointer, with <code>verify_thread()</code> re-hashing every logged checkpoint against the store. Reports a changed, removed, swapped, cross-thread or rolled-back checkpoint on audit; serves a forged checkpoint the ledger never logged (it becomes the head on resume and the audit does not look for it) and a metadata edit (the digest covers the checkpoint, not its metadata). The read path is the inner checkpointer, unchanged.</dd>
 <dt>memory-blackbox</dt><dd>A signed, hash-chained provenance ledger with a watcher for memory files such as MEMORY.md. Measured on the watcher with the agent process alive across the edit: every one of the eight edits changes the file's digest and the next scan records it as an out-of-band write, so all eight are reported on audit. The ledger itself is out of the suite's scope and was not edited.</dd>
+<dt>Atelya Attest</dt><dd>A keyed hash chain over the agent's memory op-log, with an optional head checkpoint in a ledger kept under separate control. Measured as two rows. The chain alone reports a changed, deleted, swapped, forged, cross-context or rolled-back entry and a relabelled one, and serves tail truncation, since a shorter chain is still a valid chain. With the anchored head, the truncation is reported too: all eight. The README says exactly this, and the measurement agrees.</dd>
 <dt>acrf-memory-guard</dt><dd>Per-entry HMAC checked on read (the ACRF-04 pattern). The first product on the scorecard that claims tamper evidence: refuses a changed, forged or relabelled entry on the read path, and serves a missing, swapped, cross-user or rolled-back genuine entry, since the signature covers one entry's bytes and not its slot. Its own README says rollback is out of scope; the measurement agrees and adds the other four.</dd>
 <dt>Letta</dt><dd>Block checkpoint history and archival memory.</dd>
 <dt>Mem0</dt><dd>Local Qdrant store, at rest and front door.</dd>

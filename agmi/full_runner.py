@@ -133,6 +133,15 @@ def full_scorecard() -> str:
     except ImportError:
         mbb_row = None
     try:
+        import amem_attest  # noqa: F401
+        from agmi.adapters.atelya_attest import (
+            AtelyaAttestAnchoredAdapter, AtelyaAttestChainAdapter,
+        )
+        atelya_rows = [("atelya-attest-chain", AtelyaAttestChainAdapter(), None),
+                       ("atelya-attest-chain+anchor", AtelyaAttestAnchoredAdapter(), None)]
+    except ImportError:
+        atelya_rows = []
+    try:
         import acrf_memory_guard  # noqa: F401
         from agmi.adapters.acrf_memory_guard import AcrfMemoryGuardAdapter
         acrf_row = ("acrf-memory-guard", AcrfMemoryGuardAdapter(), None)
@@ -189,6 +198,7 @@ def full_scorecard() -> str:
         *inspeximus_rows,
         *([ledger_row] if ledger_row else []),
         *([mbb_row] if mbb_row else []),
+        *atelya_rows,
         *([acrf_row] if acrf_row else []),
         ("naive-mem(scoped)", None,
          NaiveMemoryAdapter(enforce_user_scope=True)),

@@ -400,7 +400,7 @@
         "retrieval_hijack": {
           "status": "VULNERABLE",
           "verdict": "surfaced",
-          "detail": "attacker entry took a slot from a genuine memory (external: 5 of 5, ranks 2, 3, 1, 2, 1 of 3; laundered: 4 of 5, ranks 2, out, 1, 2, 1 of 3; agent-laundered: 5 of 5, ranks 2, 3, 1, 2, 2 of 3)"
+          "detail": "attacker entry took a slot from a genuine memory (external: 5 of 5, ranks 2, 3, 1, 2, 2 of 3; laundered: 4 of 5, ranks 2, out, 1, 2, 2 of 3; agent-laundered: 5 of 5, ranks 3, 2, 1, 2, 2 of 3)"
         },
         "indirect_prompt_injection": {
           "status": "VULNERABLE",
@@ -735,7 +735,7 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory ba3c44ab4b: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory 260198da69: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
         },
         "truncate": {
           "status": "reported",
@@ -750,12 +750,12 @@
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory cdcc6cc588: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 63aea2ce14: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "forge": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0cb17dc68']. They were inserted out of band, or written )"
+          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f089e34246']. They were inserted out of band, or written )"
         },
         "cross_replay": {
           "status": "ERROR",
@@ -765,12 +765,12 @@
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 6ebcbe7a4f: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory f2f475e66b: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 8779ce693c: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory 095c9ba54b: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
         },
         "memory_injection": {
           "status": "n/a",
@@ -812,7 +812,7 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory c2534a8f88: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory 25fd5e3328: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
         },
         "truncate": {
           "status": "VULNERABLE",
@@ -827,12 +827,12 @@
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory fb56515d14: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 75a4e18676: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "forge": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0d7720e83']. They were inserted out of band, or written )"
+          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f077fee652']. They were inserted out of band, or written )"
         },
         "cross_replay": {
           "status": "ERROR",
@@ -842,12 +842,12 @@
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 04d774e9cd: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 9427f1d5c4: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 4cf3d465c3: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory 0c1cab9b99: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
         },
         "memory_injection": {
           "status": "n/a",
@@ -1043,22 +1043,22 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be358-f031-61ca-8002-426382c330b9)"
+          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be43d-6eed-645c-8002-e902811877df)"
         },
         "truncate": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint missing from saver: 1f1be358-f040-601c-8003-f338fa3f3c28; checkpoint missing from saver: 1f1be358-f040-67f6-8004-78b2c1ed3f2b)"
+          "detail": "detected on reload (verify_thread: checkpoint missing from saver: 1f1be43d-6efc-6c36-8003-4c0df0a8b673; checkpoint missing from saver: 1f1be43d-6efd-642e-8004-5597eec5aff7)"
         },
         "delete_middle": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint missing from saver: 1f1be358-f04f-6dd2-8002-a9284317d724)"
+          "detail": "detected on reload (verify_thread: checkpoint missing from saver: 1f1be43d-6f0b-6db2-8002-7faf1ba503fb)"
         },
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be358-f05d-6608-8001-605d06d24cec; checkpoint content drifted: 1f1be358-f05d-6ef0-8002-977c53e89164)"
+          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be43d-6f19-694e-8001-a3e5c0d48a95; checkpoint content drifted: 1f1be43d-6f1a-62cc-8002-db0d62d856b0)"
         },
         "forge": {
           "status": "VULNERABLE",
@@ -1068,12 +1068,12 @@
         "cross_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be358-f07b-6b08-8004-41bc8702ee21)"
+          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be43d-6f39-61a4-8004-c7a0eec95c9e)"
         },
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be358-f08d-66f0-8004-b50f32ad75fa)"
+          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be43d-6f4b-6476-8004-ea9e88a70112)"
         },
         "metadata_tamper": {
           "status": "VULNERABLE",
@@ -1120,42 +1120,196 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fbf2))"
         },
         "truncate": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fbf2))"
         },
         "delete_middle": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fbf2))"
         },
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fbf2))"
         },
         "forge": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fbf2))"
         },
         "cross_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fbf2))"
         },
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fbf2))"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fbf2))"
+        },
+        "memory_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "cross_session_bleed": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "retrieval_hijack": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "indirect_prompt_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "update_poisoning": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "metadata_poisoning": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "label": "atelya-attest-chain",
+      "checked_at": "audit",
+      "measured_on": null,
+      "cells": {
+        "tamper": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=2: curr_hash mismatch (payload modified after attestation))"
+        },
+        "truncate": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "delete_middle": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=2: sequence gap/reorder: entry has seq=3, expected 2)"
+        },
+        "reorder": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=1: sequence gap/reorder: entry has seq=2, expected 1)"
+        },
+        "forge": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=5: prev_hash does not match previous curr_hash (deletion/reorder))"
+        },
+        "cross_replay": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=4: prev_hash does not match previous curr_hash (deletion/reorder))"
+        },
+        "rollback_replay": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=4: sequence gap/reorder: entry has seq=0, expected 4)"
+        },
+        "metadata_tamper": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=2: curr_hash mismatch (payload modified after attestation))"
+        },
+        "memory_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "cross_session_bleed": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "retrieval_hijack": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "indirect_prompt_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "update_poisoning": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "metadata_poisoning": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "label": "atelya-attest-chain+anchor",
+      "checked_at": "audit",
+      "measured_on": null,
+      "cells": {
+        "tamper": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=2: curr_hash mismatch (payload modified after attestation))"
+        },
+        "truncate": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (anchor: chain has 3 entries but checkpoint anchors seq=4 \u2014 history truncated/vanished below an anchored checkpoint)"
+        },
+        "delete_middle": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=2: sequence gap/reorder: entry has seq=3, expected 2)"
+        },
+        "reorder": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=1: sequence gap/reorder: entry has seq=2, expected 1)"
+        },
+        "forge": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=5: prev_hash does not match previous curr_hash (deletion/reorder))"
+        },
+        "cross_replay": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=4: prev_hash does not match previous curr_hash (deletion/reorder))"
+        },
+        "rollback_replay": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=4: sequence gap/reorder: entry has seq=0, expected 4)"
+        },
+        "metadata_tamper": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_chain: seq=2: curr_hash mismatch (payload modified after attestation))"
         },
         "memory_injection": {
           "status": "n/a",
