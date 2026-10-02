@@ -31,6 +31,7 @@ ledger = ["langgraph-ledger", "langgraph-checkpoint-sqlite"]
 blackbox = ["memory-blackbox"]
 atelya = ["atelya-attest"]
 continuum = ["continuum-agent", "cryptography"]
+postgres = ["langgraph-checkpoint-postgres", "psycopg[binary]"]
 # A real sentence embedder for the memory-specific Mem0 cells. Pulls in
 # torch; the model (about 90 MB) is fetched once and cached locally.
 embedder = ["sentence-transformers"]

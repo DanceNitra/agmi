@@ -30,6 +30,7 @@ The eight edits are the ones proposed as the test method for IETF draft-han-bmwg
 | Target | Version | T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | LangGraph `SqliteSaver` | langgraph-checkpoint-sqlite 3.1.1 | accepted | accepted | accepted | accepted | accepted | accepted | accepted | accepted |
+| LangGraph `PostgresSaver` | langgraph-checkpoint-postgres 3.1.2 on PostgreSQL 16 | accepted | accepted | accepted | accepted | accepted | accepted | accepted | accepted |
 | OpenAI Agents SDK `SQLiteSession` | openai-agents 0.20.0 | accepted | accepted | accepted | accepted | accepted | accepted | accepted | accepted |
 | Letta core memory checkpoint history | letta 0.16.8 | accepted | accepted | accepted | accepted | accepted | accepted | accepted | accepted |
 | Mem0 local Qdrant store | mem0ai 2.0.20 | accepted | accepted | accepted | accepted | accepted | error | accepted | accepted |
@@ -323,6 +324,18 @@ Every attack carries a version (`memory_injection@v2`, `retrieval_hijack@v3`, an
 `indirect_prompt_injection` measures delivery into context, not whether a model obeys it. A portable suite cannot drive every tool's live model; delivery is the property the tool owns.
 
 ## Targets and what each measurement means
+
+### LangGraph `PostgresSaver`
+
+| | |
+|---|---|
+| Measured on | langgraph-checkpoint-postgres 3.1.2, psycopg 3, PostgreSQL 16 in Docker, macOS arm64, Python 3.12 |
+| What is targeted | The `checkpoints` table: one row per checkpoint, `checkpoint` and `metadata` as JSONB, channel values inline in the JSONB for primitive state, order by `checkpoint_id` |
+| Seeded through | `PostgresSaver.put()` |
+| Read back through | `PostgresSaver.get()` and `.list()` |
+| verify() | True if `get()` returns a checkpoint and `list()` walks the thread without raising |
+
+The checkpointer production LangGraph runs on, and the same result as `SqliteSaver`: no integrity logic on the store, so all eight edits are served as genuine on the next `get()`, including the tampered head as the state the agent resumes from. The row runs only when `AGMI_POSTGRES_URI` is set, creates its own schema per run and drops it on teardown, so a shared database is never touched. The findings filed on `SqliteSaver` (langchain-ai/langgraph#9004, #9099) apply unchanged; the head anchor and the AAD binding under review there are the fixes.
 
 ### LangGraph `SqliteSaver`
 

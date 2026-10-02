@@ -2,6 +2,7 @@
 
 ## Unreleased (0.6.1)
 
+- New row: LangGraph `PostgresSaver` (langgraph-checkpoint-postgres 3.1.2 on PostgreSQL 16), all eight edits served, matching `SqliteSaver`. Runs only with `AGMI_POSTGRES_URI` set; own schema per run. Adapter `agmi/adapters/langgraph_postgres.py`, extra `postgres`, pinned in `tests/test_langgraph_postgres.py`.
 - Two new rows: CONTINUUM (continuum-agent 0.1.0), the hash-chained event log alone (reports seven of eight on audit, serves tail truncation) and with the Ed25519-signed head checked the way `attest-verify` does (all eight reported). Adapter `agmi/adapters/continuum_events.py`, extra `continuum`, pinned in `tests/test_continuum_events.py`.
 - Two new rows: Atelya Attest 0.1.1, the keyed hash chain alone (reports seven of eight on audit, serves tail truncation) and the chain with an anchored head (all eight reported). Adapter `agmi/adapters/atelya_attest.py`, extra `atelya`, pinned in `tests/test_atelya_attest.py`.
 - New row: memory-blackbox 0.1.0, the memory.md watcher with the agent process alive across the edit. All eight edits change the file's digest and are reported on the next scan. The ledger is out of scope and untouched. Adapter `agmi/adapters/memory_blackbox.py`, extra `blackbox`, pinned in `tests/test_memory_blackbox.py`.

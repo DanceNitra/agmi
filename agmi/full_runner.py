@@ -142,6 +142,13 @@ def full_scorecard() -> str:
     except ImportError:
         atelya_rows = []
     try:
+        import langgraph.checkpoint.postgres  # noqa: F401
+        from agmi.adapters.langgraph_postgres import LangGraphPostgresAdapter, postgres_uri
+        if not postgres_uri():
+            LangGraphPostgresAdapter = None  # noqa: N806 - row only with AGMI_POSTGRES_URI
+    except ImportError:
+        LangGraphPostgresAdapter = None  # noqa: N806
+    try:
         import continuum  # noqa: F401
         from agmi.adapters.continuum_events import (
             ContinuumEventsAdapter, ContinuumEventsAttestedAdapter,
@@ -198,6 +205,7 @@ def full_scorecard() -> str:
     rows = [
         ("openfang(model,fixed)", OpenFangAdapter(strict_tip=True), None),
         ("langgraph-sqlite", LangGraphSqliteAdapter(), None),
+        *([("langgraph-postgres", LangGraphPostgresAdapter(), None)] if LangGraphPostgresAdapter else []),
         *([("openai-agents-sqlite-session", openai_session, None)] if openai_session else []),
         *([("llamaindex-memory-sqlite", llamaindex_memory, None)] if llamaindex_memory else []),
         *([("langgraph-sqlite-store", None, lg_store)] if lg_store else []),
