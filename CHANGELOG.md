@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (0.6.1)
+## 0.6.1 (2 October 2026)
 
 - README: the one-table summary, the pattern paragraph and the roadmap now describe the sixteen rows on the board (seven frameworks that serve all eight, nine defended rows across six tools), the method paper v2 DOI, and the 0.6.1 and 0.7 scope.
 - New row: LangGraph `RedisSaver` (langgraph-checkpoint-redis 0.5.2 on Redis 8), all eight served. Records the `checkpoint_latest` pointer behaviour: newest document deleted with the pointer left alone reads as an empty thread; pointer moved, the rollback is served. Runs only with `AGMI_REDIS_URI` set. Adapter `agmi/adapters/langgraph_redis.py`, extra `redis`, pinned in `tests/test_langgraph_redis.py`.
