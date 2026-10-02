@@ -127,6 +127,12 @@ def full_scorecard() -> str:
     except ImportError:
         ledger_row = None
     try:
+        import memory_blackbox  # noqa: F401
+        from agmi.adapters.memory_blackbox import MemoryBlackboxMdAdapter
+        mbb_row = ("memory-blackbox-md", MemoryBlackboxMdAdapter(), None)
+    except ImportError:
+        mbb_row = None
+    try:
         import acrf_memory_guard  # noqa: F401
         from agmi.adapters.acrf_memory_guard import AcrfMemoryGuardAdapter
         acrf_row = ("acrf-memory-guard", AcrfMemoryGuardAdapter(), None)
@@ -182,6 +188,7 @@ def full_scorecard() -> str:
         *([mem0_row] if mem0_row else []),
         *inspeximus_rows,
         *([ledger_row] if ledger_row else []),
+        *([mbb_row] if mbb_row else []),
         *([acrf_row] if acrf_row else []),
         ("naive-mem(scoped)", None,
          NaiveMemoryAdapter(enforce_user_scope=True)),

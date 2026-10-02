@@ -16,6 +16,7 @@ Generated from the results file by `agmi.render`; do not edit by hand. Run of 20
 | inspeximus-rcpt+dir | audit | reported | reported | reported | reported | reported |
 | inspeximus-rcpt+dir+home | audit | reported | accepted | reported | reported | reported |
 | langgraph-ledger | audit | reported | reported | reported | reported | accepted |
+| memory-blackbox-md | audit | reported | reported | reported | reported | reported |
 | acrf-memory-guard | read | rejected | accepted | accepted | accepted | rejected |
 
 ## Through the front door
@@ -81,7 +82,7 @@ Measured on: langgraph-checkpoint-sqlite 3.1.1 SqliteStore with a vector index, 
 
 - `memory_injection`: surfaced. planted memory served as trusted fact (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
 - `cross_session_bleed`: kept out. user boundary held (cross-user: kept out 5 of 5).
-- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory (external: 5 of 5, ranks 2, 3, 1, 2, 1 of 3; laundered: 4 of 5, ranks 2, out, 1, 2, 1 of 3; agent-laundered: 5 of 5, ranks 2, 3, 1, 2, 1 of 3).
+- `retrieval_hijack`: surfaced. attacker entry took a slot from a genuine memory (external: 5 of 5, ranks 2, 3, 1, 2, 1 of 3; laundered: 4 of 5, ranks 2, out, 1, 2, 1 of 3; agent-laundered: 5 of 5, ranks 2, 3, 1, 2, 2 of 3).
 - `indirect_prompt_injection`: surfaced. instruction-shaped content delivered into context (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
 - `update_poisoning`: surfaced. attacker's correction served for the user's question (external: 5 of 5, alongside, alongside, alongside, alongside, alongside; laundered: 5 of 5, alongside, alongside, alongside, alongside, alongside; agent-laundered: 5 of 5, alongside, alongside, alongside, alongside, alongside).
 - `metadata_poisoning`: surfaced. self-tagged memory passed the trust filter (external: 5 of 5; laundered: 5 of 5; agent-laundered: 5 of 5).
@@ -147,25 +148,25 @@ Measured on: inspeximus 3.0.0, receipts off, recall defaults (lexical token over
 
 ### inspeximus-rcpt+dir
 
-- `tamper`: reported. detected on reload (verify_writes: ['memory e28f92a32d: its TEXT or KEY no longer matches its write receipt (edited after write)']).
+- `tamper`: reported. detected on reload (verify_writes: ['memory ba3c44ab4b: its TEXT or KEY no longer matches its write receipt (edited after write)']).
 - `truncate`: reported. detected on reload (verify_writes: ['write log shrank below the head kept outside the store: 3 < 5 (rolled back or truncated, receipts included); a deliberate restore is accep).
 - `delete_middle`: reported. detected on reload (verify_writes: ['receipt 2: broken chain link (a prior receipt was altered/removed)', 'write log shrank below the head kept outside the store: 4 < 5 (rolle).
-- `reorder`: reported. detected on reload (verify_writes: ['memory ccceb5a18a: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
-- `forge`: reported. detected on reload (verify_writes: ["1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0b9889225']. They were inserted out of band, or written ).
+- `reorder`: reported. detected on reload (verify_writes: ['memory cdcc6cc588: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
+- `forge`: reported. detected on reload (verify_writes: ["1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0cb17dc68']. They were inserted out of band, or written ).
 - `cross_replay`: error. edit did not land: seeding the second context changed the first context's records.
-- `rollback_replay`: reported. detected on reload (verify_writes: ['memory c8b6a5b2c9: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
-- `metadata_tamper`: reported. detected on reload (verify_writes: ['memory 1041c23a16: a field its receipt commits to no longer matches its write receipt (edited after write)']).
+- `rollback_replay`: reported. detected on reload (verify_writes: ['memory 6ebcbe7a4f: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
+- `metadata_tamper`: reported. detected on reload (verify_writes: ['memory 8779ce693c: a field its receipt commits to no longer matches its write receipt (edited after write)']).
 
 ### inspeximus-rcpt+dir+home
 
-- `tamper`: reported. detected on reload (verify_writes: ['memory 9ead91abc2: its TEXT or KEY no longer matches its write receipt (edited after write)']).
+- `tamper`: reported. detected on reload (verify_writes: ['memory c2534a8f88: its TEXT or KEY no longer matches its write receipt (edited after write)']).
 - `truncate`: accepted. accepted silently.
 - `delete_middle`: reported. detected on reload (verify_writes: ['receipt 2: broken chain link (a prior receipt was altered/removed)']).
-- `reorder`: reported. detected on reload (verify_writes: ['memory bd3db2a5d4: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
-- `forge`: reported. detected on reload (verify_writes: ["1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f062d35270']. They were inserted out of band, or written ).
+- `reorder`: reported. detected on reload (verify_writes: ['memory fb56515d14: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
+- `forge`: reported. detected on reload (verify_writes: ["1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0d7720e83']. They were inserted out of band, or written ).
 - `cross_replay`: error. edit did not land: seeding the second context changed the first context's records.
-- `rollback_replay`: reported. detected on reload (verify_writes: ['memory b6d79ddd32: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
-- `metadata_tamper`: reported. detected on reload (verify_writes: ['memory 71e8feae78: a field its receipt commits to no longer matches its write receipt (edited after write)']).
+- `rollback_replay`: reported. detected on reload (verify_writes: ['memory 04d774e9cd: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
+- `metadata_tamper`: reported. detected on reload (verify_writes: ['memory 4cf3d465c3: a field its receipt commits to no longer matches its write receipt (edited after write)']).
 
 ### inspeximus-defended
 
@@ -191,14 +192,25 @@ Measured on: inspeximus 3.0.0, receipts off, recall defaults (lexical token over
 
 ### langgraph-ledger
 
-- `tamper`: reported. detected on reload (verify_thread: checkpoint content drifted: 1f1be32c-b7c7-6ce8-8002-05a70e55bfb0).
-- `truncate`: reported. detected on reload (verify_thread: checkpoint missing from saver: 1f1be32c-b7d8-66b0-8003-d1b770b449c5; checkpoint missing from saver: 1f1be32c-b7d8-6dea-8004-3fa8c073cf58).
-- `delete_middle`: reported. detected on reload (verify_thread: checkpoint missing from saver: 1f1be32c-b7e6-6eae-8002-1b3a5f926f9c).
-- `reorder`: reported. detected on reload (verify_thread: checkpoint content drifted: 1f1be32c-b7f4-693c-8001-41902ac772c4; checkpoint content drifted: 1f1be32c-b7f5-6224-8002-67728ce75b07).
+- `tamper`: reported. detected on reload (verify_thread: checkpoint content drifted: 1f1be358-f031-61ca-8002-426382c330b9).
+- `truncate`: reported. detected on reload (verify_thread: checkpoint missing from saver: 1f1be358-f040-601c-8003-f338fa3f3c28; checkpoint missing from saver: 1f1be358-f040-67f6-8004-78b2c1ed3f2b).
+- `delete_middle`: reported. detected on reload (verify_thread: checkpoint missing from saver: 1f1be358-f04f-6dd2-8002-a9284317d724).
+- `reorder`: reported. detected on reload (verify_thread: checkpoint content drifted: 1f1be358-f05d-6608-8001-605d06d24cec; checkpoint content drifted: 1f1be358-f05d-6ef0-8002-977c53e89164).
 - `forge`: accepted. accepted silently.
-- `cross_replay`: reported. detected on reload (verify_thread: checkpoint content drifted: 1f1be32c-b813-640e-8004-3a633250a67e).
-- `rollback_replay`: reported. detected on reload (verify_thread: checkpoint content drifted: 1f1be32c-b825-6e6a-8004-09ce754222cb).
+- `cross_replay`: reported. detected on reload (verify_thread: checkpoint content drifted: 1f1be358-f07b-6b08-8004-41bc8702ee21).
+- `rollback_replay`: reported. detected on reload (verify_thread: checkpoint content drifted: 1f1be358-f08d-66f0-8004-b50f32ad75fa).
 - `metadata_tamper`: accepted. accepted silently.
+
+### memory-blackbox-md
+
+- `tamper`: reported. detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95)).
+- `truncate`: reported. detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95)).
+- `delete_middle`: reported. detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95)).
+- `reorder`: reported. detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95)).
+- `forge`: reported. detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95)).
+- `cross_replay`: reported. detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95)).
+- `rollback_replay`: reported. detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95)).
+- `metadata_tamper`: reported. detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fb95)).
 
 ### acrf-memory-guard
 

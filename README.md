@@ -37,6 +37,7 @@ The eight edits are the ones proposed as the test method for IETF draft-han-bmwg
 | inspeximus, receipts on with a key, attacker holds the store's directory | inspeximus 3.0.0 | reported | reported | reported | reported | reported | error | reported | reported |
 | inspeximus, receipts on with a key, attacker also holds the user's config home | inspeximus 3.0.0 | reported | accepted | reported | reported | reported | error | reported | reported |
 | langgraph-ledger over `SqliteSaver`, hash-chained ledger, `verify_thread()` audit | langgraph-ledger 0.3.0 | reported | reported | reported | reported | accepted | reported | reported | accepted |
+| memory-blackbox memory.md watcher, agent process alive, scan audit | memory-blackbox 0.1.0 | reported | reported | reported | reported | reported | reported | reported | reported |
 | acrf-memory-guard, per-entry HMAC over a JSON store, read path | acrf-memory-guard 0.1.0 | rejected | accepted | accepted | accepted | rejected | accepted | accepted | rejected |
 
 The T6 cell on the inspeximus and Mem0 rows reads `error` for now. The inspeximus maintainer found (issue #5) that on those two adapters the edit was a no-op: the victim pool was read from both contexts, so the donor was copied onto itself, and the earlier claim that a receipt does not bind the owning user rested on that no-op and is withdrawn. The landed guard (control C3) now refuses to score the cell until the victim pool is scoped to the first context; with that scoped, both receipt rows report T6 and Mem0 accepts it on a real edit. Those verdicts land with the fix, regenerated from a run.
@@ -471,6 +472,18 @@ The adapter is `agmi/adapters/inspeximus_recall.py`; `python -m agmi.measure --t
 | verify() | `verify_thread()`: chain intact, and every logged checkpoint still present in the saver with the logged digest |
 
 An audit-time design, and a good one for what it logs: every checkpoint the ledger recorded is re-fetched by id and re-hashed, so a changed (T1), removed (T2, T3), swapped (T4), cross-thread (T6) or rolled-back (T7) checkpoint is named in the report. Two edits pass. A forged checkpoint appended past the tail (T5) was never logged, so the audit never looks for it, and on resume it is the head the agent continues from. A metadata edit (T8) passes because the digest covers the checkpoint and not its metadata column. The read path is plain LangGraph, so all eight are served on resume until someone runs the audit; the README is explicit that the keyless chain assumes a trusted head and that the head should be anchored outside the log, and that an attacker who also rewrites the ledger is out of scope keyless and in scope with `hmac_key`. The suite's edits touch the checkpoint store only, so the keyed mode measures the same here.
+
+### memory-blackbox
+
+| | |
+|---|---|
+| Measured on | memory-blackbox 0.1.0, macOS arm64, Python 3.12 |
+| What is targeted | A MEMORY.md memory file, one memory per line with a trailing HTML comment as its label; AGENTS.md stands in for the second context |
+| Seeded through | the agent writes the file, then `MemoryMdAdapter.scan()` captures the write as a signed provenance record in the ledger |
+| Read back through | the file itself, unchanged |
+| verify() | `scan()` after the edit: a recorded write for MEMORY.md means the watcher saw a change the agent did not make |
+
+memory-blackbox is a flight recorder: a BLAKE3 hash chain, a signed Merkle root and Ed25519 signatures protect its own ledger, and its README places it as post-incident reconstruction rather than a runtime block. The suite never edits the ledger. What it measures is the memory-file watcher, which keeps a digest of each watched file and records an out-of-band write for any file that changed since the last scan. With the agent process alive across the edit, every one of the eight edits changes the digest and is reported on the next scan, including the cross-context copy and the rollback, because the watcher compares bytes and not meaning. The read path is the file, so the agent still acts on the edit until the scan runs.
 
 ### acrf-memory-guard
 
