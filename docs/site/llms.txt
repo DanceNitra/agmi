@@ -1,19 +1,20 @@
 # Agent Memory Integrity (agmi)
 > A conformance test suite that measures whether AI agent memory and checkpoint stores notice when they are tampered with.
 
-Version 0.6.0, measured 2026-09-30. Source: https://github.com/tech4biz-yasha/agmi
+Version 0.6.0, measured 2026-10-02. Source: https://github.com/tech4biz-yasha/agmi
 Method text proposed for IETF draft-han-bmwg-agent-security-benchmark metric 5.4.7.
 
 ## At rest (eight storage-level edits, attacker has store access, no keys)
 - OpenFang model, tip-persistence fix (reference model of a hash chain): T1 rejected, T2 rejected, T3 rejected, T4 rejected, T5 rejected, T6 n/a, T7 n/a, T8 n/a
 - LangGraph SqliteSaver (langgraph-checkpoint-sqlite 3.1.1): T1 accepted, T2 accepted, T3 accepted, T4 accepted, T5 accepted, T6 accepted, T7 accepted, T8 accepted
 - OpenAI Agents SDK SQLiteSession (openai-agents 0.20.0): T1 accepted, T2 accepted, T3 accepted, T4 accepted, T5 accepted, T6 accepted, T7 accepted, T8 accepted
-- llamaindex-memory-sqlite (): T1 accepted, T2 accepted, T3 accepted, T4 accepted, T5 accepted, T6 accepted, T7 accepted, T8 accepted
+- LlamaIndex Memory, SQLAlchemy chat store (llama-index-core 0.14.24): T1 accepted, T2 accepted, T3 accepted, T4 accepted, T5 accepted, T6 accepted, T7 accepted, T8 accepted
 - Letta block checkpoint history (letta 0.16.8): T1 accepted, T2 accepted, T3 accepted, T4 accepted, T5 accepted, T6 accepted, T7 accepted, T8 accepted
 - Mem0 local Qdrant store (mem0ai 2.0.20): T1 accepted, T2 accepted, T3 accepted, T4 accepted, T5 accepted, T6 error, T7 accepted, T8 accepted
 - inspeximus, receipts off (default) (inspeximus 3.0.0): T1 accepted, T2 accepted, T3 accepted, T4 accepted, T5 accepted, T6 error, T7 accepted, T8 accepted
 - inspeximus, receipts on, attacker holds the store directory (inspeximus 3.0.0): T1 reported, T2 reported, T3 reported, T4 reported, T5 reported, T6 error, T7 reported, T8 reported
 - inspeximus, receipts on, attacker also holds the config home (inspeximus 3.0.0): T1 reported, T2 accepted, T3 reported, T4 reported, T5 reported, T6 error, T7 reported, T8 reported
+- acrf-memory-guard, per-entry HMAC over a JSON store (acrf-memory-guard 0.1.0): T1 rejected, T2 accepted, T3 accepted, T4 accepted, T5 rejected, T6 accepted, T7 accepted, T8 rejected
 
 ## Front door (six attacks through the tool's own write path)
 - LangGraph SqliteStore: Planted fact surfaced, Cross-user leak kept out, Retrieval hijack surfaced, Hidden instruction surfaced, Update poisoning surfaced, Metadata poisoning surfaced
@@ -38,5 +39,14 @@ Method text proposed for IETF draft-han-bmwg-agent-security-benchmark metric 5.4
 - https://agentmemoryintegrity.org/ecosystem.html
 - https://agentmemoryintegrity.org/about.html
 
+## Record (standards, vendor threads, contributions)
+- IETF BMWG: on 24 September 2026 the author sent the eight edits, three verdict words, two control cases and the scoring rule to the bmwg list as proposed text for a new Section 6.6 of China Mobile's draft-han-bmwg-agent-security-benchmark (metric 5.4.7, Protection of Memory Data Integrity), with measured verdicts. The draft's authors replied on 28 September 2026 agreeing that "manually tamper" is too vague and that read-path versus audit-only detection should be reflected in the metric; they track the proposal as https://github.com/Maisy-ML/Agent-security-benchmark/issues/1 for the next revision. Companion Internet-Draft by the author: draft-khandelwal-bmwg-agent-memory-integrity-00 (26 September 2026). agmi is the reference implementation.
+- LangGraph: https://github.com/langchain-ai/langgraph/issues/9004 (EncryptedSerializer verifies a genuine checkpoint moved between threads or rolled back; a community fix binding thread, checkpoint id and channel as AEAD data was verified with agmi) and https://github.com/langchain-ai/langgraph/issues/9099 (head deletion still rolls a thread back; a community reference implementation of a caller-supplied expected_checkpoint_id was verified with agmi on the sync and async checkpointers; merged with the #9004 fix both cases are closed). Both raised by the author from these measurements.
+- OpenAI Agents SDK: https://github.com/openai/openai-agents-python/issues/5176, all eight edits accepted on SQLiteSession; raised by the author; answered with a documentation change stating the store trusts its storage.
+- LlamaIndex: https://github.com/run-llama/llama_index/issues/23246, all eight edits accepted on Memory; raised by the author; a community documentation note (PR 23312) is in review and the issue stays open for an integrity option.
+- inspeximus: five rows; the two defended trust-root rows were contributed by the maintainer (DanceNitra) and reproduced independently. The maintainer also found that the suite's T6 edit was a no-op on the inspeximus and Mem0 rows (https://github.com/tech4biz-yasha/agmi/issues/5); the earlier claim that a receipt does not bind the owning user is withdrawn, and control C3 (every edit must land as intended, or the cell reads error) was added as a result.
+- OpenFang: a forward-only hash chain misses truncation; persisting the tip closes it. The first result the suite produced and the origin of its reference model.
+- OWASP: the front-door attacks map to the agentic security initiative's memory and context poisoning category (ASI06).
+
 ## Author
-Yasha Khandelwal, https://yashakhandelwal.com/, yasha.khandelwal@tech4biz.io. Hosted assessments: https://audittraxlabs.com/
+Yasha Khandelwal, https://yashakhandelwal.com/, yasha.khandelwal@tech4biz.io, ORCID on the About page. Built and maintained by the author; rows also come from tool maintainers. Hosted assessments: https://audittraxlabs.com/

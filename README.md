@@ -36,6 +36,7 @@ The eight edits are the ones proposed as the test method for IETF draft-han-bmwg
 | inspeximus, receipts off (default), read path | inspeximus 3.0.0 | accepted | accepted | accepted | accepted | accepted | error | accepted | accepted |
 | inspeximus, receipts on with a key, attacker holds the store's directory | inspeximus 3.0.0 | reported | reported | reported | reported | reported | error | reported | reported |
 | inspeximus, receipts on with a key, attacker also holds the user's config home | inspeximus 3.0.0 | reported | accepted | reported | reported | reported | error | reported | reported |
+| acrf-memory-guard, per-entry HMAC over a JSON store, read path | acrf-memory-guard 0.1.0 | rejected | accepted | accepted | accepted | rejected | accepted | accepted | rejected |
 
 The T6 cell on the inspeximus and Mem0 rows reads `error` for now. The inspeximus maintainer found (issue #5) that on those two adapters the edit was a no-op: the victim pool was read from both contexts, so the donor was copied onto itself, and the earlier claim that a receipt does not bind the owning user rested on that no-op and is withdrawn. The landed guard (control C3) now refuses to score the cell until the victim pool is scoped to the first context; with that scoped, both receipt rows report T6 and Mem0 accepts it on a real edit. Those verdicts land with the fix, regenerated from a run.
 
@@ -457,6 +458,18 @@ The adapter is `agmi/adapters/inspeximus_rows.py`; `pip install -e ".[inspeximus
 Two facts about inspeximus 3.0.0's default read path decide the row. `mode="auto"` ranks by lexical token overlap while the store holds fewer than 300 active memories and only then switches to a lexical-plus-semantic fusion, so at the sizes these attacks use the ranking is lexical whether or not an embedder is configured, and the row runs offline. And a memory written for one user is dropped from a `recall` scoped to another before ranking, which is why the bleed cell held; a memory written with no `user_id` at all is visible to every scoped `recall`, by design, and that is pinned too. `recall` will skip a record whose status is "hub" (a universal matcher), which is the shape of a hijack defence, but nothing in the default read path or in `sleep()`, the store's maintenance pass, flagged the stuffed entry as one, so it was served first at relevance 1.0.
 
 The adapter is `agmi/adapters/inspeximus_recall.py`; `python -m agmi.measure --target inspeximus` reproduces the row.
+
+### acrf-memory-guard
+
+| | |
+|---|---|
+| Measured on | acrf-memory-guard 0.1.0, macOS arm64, Python 3.12 |
+| What is targeted | A JSON store of signed entries keyed by id, the layout the package's CLI verifies; two users share one store and one secret, keys `ctx-A::nn` and `ctx-B::nn`, owner carried inside the signed entry as the README's `user_id` is |
+| Seeded through | `sign_entry()`, HMAC-SHA256 over the entry's canonical JSON, secret from the environment |
+| Read back through | `read_safe()` on each of the agent's entries, which raises `MemoryIntegrityError` on a mismatch or a missing signature |
+| verify() | True if every entry of the first context passes `read_safe()` |
+
+The first defended row measured from a product that claims tamper evidence. The package signs each entry's bytes and checks them on read, so a changed entry (T1), a forged one (T5) and a relabelled one (T8, the timestamp lives inside the signed entry) are refused before they reach the agent. The signature covers one entry and nothing about its slot, its neighbours or its count, so a missing entry leaves nothing to fail (T2, T3), two genuine entries swapped between slots both verify (T4), a genuine entry from the other user's slot verifies under this user's key even though the signed content names the other owner (T6), and an older genuine entry over the newest verifies (T7). The package's README says it does not protect against rollback; the measurement agrees and adds the other four. Binding the key into the signed input would close T4, T6 and T7; a previous-entry link or a signed count would close T2 and T3.
 
 ### Reference rows
 

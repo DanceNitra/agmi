@@ -121,6 +121,12 @@ def full_scorecard() -> str:
     lg_store = _langgraph_store_semantic()
     letta_archival = _letta_archival_semantic()
     try:
+        import acrf_memory_guard  # noqa: F401
+        from agmi.adapters.acrf_memory_guard import AcrfMemoryGuardAdapter
+        acrf_row = ("acrf-memory-guard", AcrfMemoryGuardAdapter(), None)
+    except ImportError:
+        acrf_row = None
+    try:
         from agmi.adapters.mem0_at_rest import Mem0AtRestAdapter
         mem0_row = ("mem0-qdrant-local", Mem0AtRestAdapter(), _mem0_semantic())
     except ImportError:
@@ -169,6 +175,7 @@ def full_scorecard() -> str:
         *([("letta-archival", None, letta_archival)] if letta_archival else []),
         *([mem0_row] if mem0_row else []),
         *inspeximus_rows,
+        *([acrf_row] if acrf_row else []),
         ("naive-mem(scoped)", None,
          NaiveMemoryAdapter(enforce_user_scope=True)),
         ("naive-mem(unscoped)", None,

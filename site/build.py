@@ -64,6 +64,8 @@ ROW_NAMES = {
     "langgraph-sqlite": ("LangGraph SqliteSaver", "langgraph-checkpoint-sqlite 3.1.1"),
     "langgraph-sqlite-store": ("LangGraph SqliteStore", "langgraph-checkpoint-sqlite 3.1.1"),
     "openai-agents-sqlite-session": ("OpenAI Agents SDK SQLiteSession", "openai-agents 0.20.0"),
+    "llamaindex-memory-sqlite": ("LlamaIndex Memory, SQLAlchemy chat store", "llama-index-core 0.14.24"),
+    "acrf-memory-guard": ("acrf-memory-guard, per-entry HMAC over a JSON store", "acrf-memory-guard 0.1.0"),
     "letta-block-history": ("Letta block checkpoint history", "letta 0.16.8"),
     "letta-archival": ("Letta archival memory", "letta 0.16.8"),
     "mem0-qdrant-local": ("Mem0 local Qdrant store", "mem0ai 2.0.20"),
@@ -77,12 +79,21 @@ ROW_NAMES = {
     "reference-defended(model)": ("Reference store, defended", "signed writes, quarantine, stuffing check"),
 }
 FINDINGS = [
+    ("The suite catches two of its own no-op edits (control C3)", "2026-09-30",
+     "The inspeximus maintainer found that on the inspeximus and Mem0 rows the T6 cross-context replay was a no-op: the victim pool was read from both contexts, so the donor was copied onto itself and the cell scored as accepted on an edit that never happened. The earlier finding that a receipt does not bind the owning user rested on that no-op and is withdrawn; with the pool scoped to the first context, both receipt rows report T6. A third control now runs before every verdict: each attack proves its edit landed as intended, and a cell whose edit did not land reads error. That control also found the Mem0 T4 reorder was a no-op (the adapter wrote each point back under its own id); fixed, and Mem0 still accepts it on a real swap. Those cells read error until the scoped victim pool lands.",
+     "https://github.com/tech4biz-yasha/agmi/issues/5"),
+    ("Head deletion needs an anchor outside the store (LangGraph #9099)", "2026-09-30",
+     "Binding a record to its place (#9004) cannot see a record that has been removed, so deleting the newest checkpoints still rolls a thread back silently. A community reference implementation lets the caller pass the id of the head it trusts; with it set, head deletion raises on both the sync and async checkpointers, and merged with the #9004 fix the rollback-by-overwrite case is rejected as well. Measured with the suite on both paths; the history view is not covered by the anchor and that is on record.",
+     "https://github.com/langchain-ai/langgraph/issues/9099"),
+    ("Six of six stores accept all eight at-rest edits", "2026-09-27",
+     "OpenAI Agents SDK SQLiteSession and LlamaIndex Memory join LangGraph SqliteSaver, Letta block history, Mem0 local Qdrant and inspeximus in its default configuration: every one of the eight storage-level edits is served as genuine, and none of the six checks anything on read. OpenAI closed its issue with a documentation change stating the session store trusts its storage; LlamaIndex has a documentation note in review and the issue stays open for an integrity option.",
+     "https://github.com/run-llama/llama_index/issues/23246"),
     ("Four of four stores accept all eight at-rest edits", "2026-09-25",
      "LangGraph SqliteSaver, Letta block history, Mem0 local Qdrant and inspeximus in its default configuration all serve every one of the eight storage-level edits as genuine. None of the four checks anything on read.",
      None),
-    ("A receipt does not bind the owning user (inspeximus)", "2026-09-25",
-     "With receipts on, inspeximus's audit catches seven of the eight edits, but not T6: a genuine signed record lifted from another user's context still passes, because the receipt commits to the record's text and key and not to who it belongs to. Rollback (T7) and metadata edits (T8) are caught. Raised with the maintainer.",
-     None),
+    ("Withdrawn: a receipt does not bind the owning user (inspeximus)", "2026-09-25",
+     "This finding is withdrawn as of 2026-09-30, see the entry above. The T6 edit on the inspeximus rows had not actually crossed contexts, so the cell measured nothing. With a real crossing, the receipts report it.",
+     "https://github.com/tech4biz-yasha/agmi/issues/5"),
     ("Encryption without identity binding (LangGraph #9004)", "2026-09-24",
      "LangGraph's EncryptedSerializer authenticates the ciphertext but not the record's place, so a genuine encrypted checkpoint from one thread verifies in another (T6) and an older one verifies over the newest (T7). A proposed fix binding thread, checkpoint id and channel as AEAD associated data rejects both; deleting the head row (T2) still rolls the thread back, because binding a record to its place cannot see a record that has been removed.",
      "https://github.com/langchain-ai/langgraph/issues/9004"),
@@ -433,7 +444,7 @@ def build():
     d_date, d_platform = d["date"], d["platform"]
     at_rest_keys = [k for k in ["openfang(model,fixed)", "langgraph-sqlite", "openai-agents-sqlite-session", "llamaindex-memory-sqlite", "letta-block-history",
                                 "mem0-qdrant-local", "inspeximus-default", "inspeximus-rcpt+dir",
-                                "inspeximus-rcpt+dir+home"] if k in rows]
+                                "inspeximus-rcpt+dir+home", "acrf-memory-guard"] if k in rows]
     fd_keys = [k for k in ["langgraph-sqlite-store", "letta-archival", "mem0-qdrant-local",
                            "inspeximus-default", "inspeximus-defended", "inspeximus-defended-key",
                            "naive-mem(scoped)", "naive-mem(unscoped)", "reference-defended(model)"] if k in rows]
@@ -597,14 +608,14 @@ def build():
     # ---- method
     me = f'''<section class="part"><h1>Method</h1>
 <p>The rule that makes every cell a measurement and not an opinion: the verdict is what the tool does, never what we infer. We seed through the tool's own API, apply one edit to the store, restart, and read through the tool's own read path. If it raises or refuses, that is rejected. If its documented audit names the problem, that is reported. If it serves the altered memory and says nothing, that is accepted. We never compare content and call a difference "detected", because the tool did not say anything.</p>
-<h2>Two controls before any verdict</h2>
-<p>A reload with no edit must still verify, or the cell is n/a; without this a store that cannot reopen its own files would score a perfect pass. And for the front-door attacks, the victim must be able to read back a genuine memory they wrote, in the same store state; without this an empty answer would satisfy "not surfaced".</p>
+<h2>Three controls before any verdict</h2>
+<p>A reload with no edit must still verify, or the cell is n/a; without this a store that cannot reopen its own files would score a perfect pass. And for the front-door attacks, the victim must be able to read back a genuine memory they wrote, in the same store state; without this an empty answer would satisfy "not surfaced". And the edit itself must land: every at-rest attack snapshots the store before and after, and proves the change is the one it intended (the right record, the right content, the right owner, nothing else moved). An edit that fails this is an error cell, never a pass or a fail, because the harness and not the tool is at fault. This third control exists because the inspeximus maintainer found an edit that was not landing.</p>
 <h2>The threat models</h2>
 {DIAG_THREAT}
 <p><b>At rest.</b> The adversary has write access to the medium that holds the store but holds none of the tool's keys: a compromised host, a shared database credential, an injection flaw in a co-located application, a restored backup, a malicious operator. Because the adversary can write anything, an integrity value stored next to the data protects nothing unless it is bound to a secret the adversary does not hold. So the method measures the read path, not the presence of integrity fields.</p>
 <p><b>Front door.</b> The adversary can only write through the agent, on one of three channels: external (no label), laundered (a forged first-party label, no key), and agent-laundered (a forged label carrying a valid signature). Provenance alone is never allowed to pass a content cell.</p>
 <h2>The IETF mapping</h2>
-<p>China Mobile's draft-han-bmwg-agent-security-benchmark-00 defines metric 5.4.7, "Protection of Memory Data Integrity", with no test method. On 24 September 2026 the eight edits T1 to T8, the verdict words, the two control cases and the scoring rule were sent to the BMWG list as proposed text for a new Section 6.6, with the measured verdicts above. agmi is the reference implementation of that text. <a href="https://mailarchive.ietf.org/arch/browse/bmwg/">Archive.</a></p>
+<p>China Mobile's draft-han-bmwg-agent-security-benchmark-00 defines metric 5.4.7, "Protection of Memory Data Integrity", with no test method. On 24 September 2026 the eight edits T1 to T8, the verdict words, the two control cases and the scoring rule were sent to the BMWG list as proposed text for a new Section 6.6, with the measured verdicts above. The authors replied on the list on 28 September: they agree that "manually tamper" is too vague and that the distinction between read-path and audit-only detection should be reflected in the metric, and they are tracking the proposal for the next revision. The method is also filed as a companion Internet-Draft, draft-khandelwal-bmwg-agent-memory-integrity-00. agmi is the reference implementation of both texts. <a href="https://mailarchive.ietf.org/arch/browse/bmwg/">Archive.</a></p>
 <h2>Why T6 and T7 matter more than they look</h2>
 <p>Encryption at rest keeps an attacker from reading a record. It does not stop them moving one. A genuine encrypted record copied to another user's slot decrypts and verifies, because as far as the cipher is concerned the bytes are authentic. Only a store that binds a record to its context and its position in the sequence rejects T6 and T7. That is the difference between confidentiality and integrity, and it is where every store measured so far scores zero.</p>
 <h2>Self-validation</h2>
@@ -685,6 +696,7 @@ Zenodo. https://doi.org/10.5281/zenodo.22860886</code></pre>
         ("Phase 2", "Mutation engine on every attacker write; update poisoning and metadata poisoning; twelve-column front-door scorecard on four real stores", "done"),
         ("Memory agent v1", "Hunt loop over six attacks, three channels and mutations; proof and reproduction script per finding; authorisation gate that fails closed", "done"),
         ("0.6.0", "Eight at-rest edits T1 to T8 with control cases and read/audit detection points, matching the proposed IETF 5.4.7 method; agmi-check and the GitHub Action", "done"),
+        ("0.6.1", "Control C3, the landed guard: every edit proves it landed as intended before a verdict; OpenAI Agents SDK and LlamaIndex rows; companion Internet-Draft filed", "done"),
         ("Phase 3", "Live targets over HTTP (MCP memory servers, deployed LangGraph and Letta) behind the authorisation gate; obedience oracle that proves the agent acted on the poison; ingestion marking measured per framework", "next"),
         ("Phase 4", "Memory agent driving content-only attacks through a real model, same proof discipline", "planned"),
         ("0.9", "Deserialization safety, and a reference integrity layer (a hash chain over checkpoint ids) offered upstream as an optional mode", "planned"),
@@ -700,18 +712,21 @@ Zenodo. https://doi.org/10.5281/zenodo.22860886</code></pre>
 {DIAG_ECO}
 <h2>Standards</h2>
 <dl class="eco">
-<dt>IETF BMWG</dt><dd>China Mobile's draft-han-bmwg-agent-security-benchmark defines metric 5.4.7, Protection of Memory Data Integrity, with no test method. The eight edits, verdict words, control cases and scoring rule were sent to the working group list on 24 September 2026 as proposed text for a new Section 6.6, with measured verdicts. agmi is that method's reference implementation. <a href="https://mailarchive.ietf.org/arch/browse/bmwg/">Archive</a>.</dd>
+<dt>IETF BMWG</dt><dd>China Mobile's draft-han-bmwg-agent-security-benchmark defines metric 5.4.7, Protection of Memory Data Integrity, with no test method. The eight edits, verdict words, control cases and scoring rule were sent to the working group list on 24 September 2026 as proposed text for a new Section 6.6, with measured verdicts. The draft's authors replied on 28 September: they agree the current "manually tamper" wording is too vague and that read-path versus audit-only detection belongs in the metric, and they track the proposal as <a href="https://github.com/Maisy-ML/Agent-security-benchmark/issues/1">issue #1</a> on their repository for the next revision. The method is also filed as a companion Internet-Draft, draft-khandelwal-bmwg-agent-memory-integrity-00 (26 September 2026). agmi is the reference implementation. <a href="https://mailarchive.ietf.org/arch/browse/bmwg/">Archive</a>.</dd>
 <dt>OWASP</dt><dd>The front-door attacks map to the agentic security initiative's memory and context poisoning category (ASI06). agmi is offered there as the way to test it.</dd>
 </dl>
 <h2>Stores measured</h2>
 <dl class="eco">
-<dt>LangGraph</dt><dd>SqliteSaver and SqliteStore. Issue <a href="https://github.com/langchain-ai/langgraph/issues/9004">#9004</a> (encrypted checkpointer replay) was raised from these measurements; a community fix was verified with the suite and its remaining gap (deletion rollback) is on record.</dd>
+<dt>LangGraph</dt><dd>SqliteSaver and SqliteStore. Issue <a href="https://github.com/langchain-ai/langgraph/issues/9004">#9004</a> (encrypted checkpointer replay) was raised from these measurements and a community fix verified with the suite. Its remaining gap, head deletion, is <a href="https://github.com/langchain-ai/langgraph/issues/9099">#9099</a>; a community reference implementation of a caller-supplied head anchor was verified with the suite on the sync and async paths, and the two fixes measured together close both.</dd>
+<dt>OpenAI Agents SDK</dt><dd>SQLiteSession. All eight edits accepted; <a href="https://github.com/openai/openai-agents-python/issues/5176">#5176</a> was closed with a documentation change stating the session store trusts its storage.</dd>
+<dt>LlamaIndex</dt><dd>Memory on the SQLAlchemy chat store. All eight edits accepted; <a href="https://github.com/run-llama/llama_index/issues/23246">#23246</a> is open, with a community documentation note in review.</dd>
+<dt>acrf-memory-guard</dt><dd>Per-entry HMAC checked on read (the ACRF-04 pattern). The first product on the scorecard that claims tamper evidence: refuses a changed, forged or relabelled entry on the read path, and serves a missing, swapped, cross-user or rolled-back genuine entry, since the signature covers one entry's bytes and not its slot. Its own README says rollback is out of scope; the measurement agrees and adds the other four.</dd>
 <dt>Letta</dt><dd>Block checkpoint history and archival memory.</dd>
 <dt>Mem0</dt><dd>Local Qdrant store, at rest and front door.</dd>
-<dt>inspeximus</dt><dd>Five rows: default, receipts on (two attacker positions), and two defended trust-root configurations contributed by its maintainer with the control cases as tests. The receipts-on rows carry the T6 finding: a receipt binds text and key, not the owning user.</dd>
+<dt>inspeximus</dt><dd>Five rows: default, receipts on (two attacker positions), and two defended trust-root configurations contributed by its maintainer with the control cases as tests. The maintainer also found the T6 no-op in the suite's own harness (<a href="https://github.com/tech4biz-yasha/agmi/issues/5">issue #5</a>), which is why control C3 exists.</dd>
 </dl>
 <h2>Contributors</h2>
-<p>Rows come from maintainers as well as from the suite's author. The inspeximus defended rows were submitted by the tool's maintainer, DanceNitra, with the two control cases from the issue thread written as tests, and reproduced independently before publication. That is the pattern for every future vendor row: an adapter, the measured cells, the controls as tests, an independent reproduction.</p>
+<p>Rows come from maintainers as well as from the suite's author. The inspeximus defended rows were submitted by the tool's maintainer, DanceNitra, with the two control cases from the issue thread written as tests, and reproduced independently before publication. He also read the harness closely enough to find that one of its edits was not landing, which became control C3. That is the pattern for every future vendor row: an adapter, the measured cells, the controls as tests, an independent reproduction, and the harness open to the same scrutiny as the tools it measures.</p>
 <h2>Assessments</h2>
 <p>The open benchmark is free and stays free. From 1.0, <a href="https://audittraxlabs.com/">AuditTrax Labs</a> offers hosted runs against a vendor's own deployment, conformance levels, and a badge that links back to the public row, so a claim of tamper evidence is a link to a measurement.</p>
 <h2>Conformance levels, proposed for 1.0</h2>
@@ -790,8 +805,17 @@ Method text proposed for IETF draft-han-bmwg-agent-security-benchmark metric 5.4
 - {SITE}/ecosystem.html
 - {SITE}/about.html
 
+## Record (standards, vendor threads, contributions)
+- IETF BMWG: on 24 September 2026 the author sent the eight edits, three verdict words, two control cases and the scoring rule to the bmwg list as proposed text for a new Section 6.6 of China Mobile's draft-han-bmwg-agent-security-benchmark (metric 5.4.7, Protection of Memory Data Integrity), with measured verdicts. The draft's authors replied on 28 September 2026 agreeing that "manually tamper" is too vague and that read-path versus audit-only detection should be reflected in the metric; they track the proposal as https://github.com/Maisy-ML/Agent-security-benchmark/issues/1 for the next revision. Companion Internet-Draft by the author: draft-khandelwal-bmwg-agent-memory-integrity-00 (26 September 2026). agmi is the reference implementation.
+- LangGraph: https://github.com/langchain-ai/langgraph/issues/9004 (EncryptedSerializer verifies a genuine checkpoint moved between threads or rolled back; a community fix binding thread, checkpoint id and channel as AEAD data was verified with agmi) and https://github.com/langchain-ai/langgraph/issues/9099 (head deletion still rolls a thread back; a community reference implementation of a caller-supplied expected_checkpoint_id was verified with agmi on the sync and async checkpointers; merged with the #9004 fix both cases are closed). Both raised by the author from these measurements.
+- OpenAI Agents SDK: https://github.com/openai/openai-agents-python/issues/5176, all eight edits accepted on SQLiteSession; raised by the author; answered with a documentation change stating the store trusts its storage.
+- LlamaIndex: https://github.com/run-llama/llama_index/issues/23246, all eight edits accepted on Memory; raised by the author; a community documentation note (PR 23312) is in review and the issue stays open for an integrity option.
+- inspeximus: five rows; the two defended trust-root rows were contributed by the maintainer (DanceNitra) and reproduced independently. The maintainer also found that the suite's T6 edit was a no-op on the inspeximus and Mem0 rows (https://github.com/tech4biz-yasha/agmi/issues/5); the earlier claim that a receipt does not bind the owning user is withdrawn, and control C3 (every edit must land as intended, or the cell reads error) was added as a result.
+- OpenFang: a forward-only hash chain misses truncation; persisting the tip closes it. The first result the suite produced and the origin of its reference model.
+- OWASP: the front-door attacks map to the agentic security initiative's memory and context poisoning category (ASI06).
+
 ## Author
-Yasha Khandelwal, https://yashakhandelwal.com/, yasha.khandelwal@tech4biz.io. Hosted assessments: https://audittraxlabs.com/
+Yasha Khandelwal, https://yashakhandelwal.com/, yasha.khandelwal@tech4biz.io, ORCID on the About page. Built and maintained by the author; rows also come from tool maintainers. Hosted assessments: https://audittraxlabs.com/
 """)
     pages = ["", "scorecard.html", "edits.html", "architecture.html", "method.html", "agent.html", "findings.html", "ecosystem.html", "run.html", "cite.html", "about.html"]
     (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'

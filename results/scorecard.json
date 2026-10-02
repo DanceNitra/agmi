@@ -1,5 +1,5 @@
 {
-  "date": "2026-09-30",
+  "date": "2026-10-02",
   "platform": "Darwin arm64, Python 3.12",
   "attack_versions": {
     "tamper": 1,
@@ -400,7 +400,7 @@
         "retrieval_hijack": {
           "status": "VULNERABLE",
           "verdict": "surfaced",
-          "detail": "attacker entry took a slot from a genuine memory (external: 4 of 5, ranks 2, out, 1, 2, 1 of 3; laundered: 4 of 5, ranks 2, out, 1, 2, 1 of 3; agent-laundered: 4 of 5, ranks 2, out, 1, 2, 2 of 3)"
+          "detail": "attacker entry took a slot from a genuine memory (external: 5 of 5, ranks 2, 3, 1, 2, 1 of 3; laundered: 4 of 5, ranks 2, out, 1, 2, 1 of 3; agent-laundered: 5 of 5, ranks 2, 3, 1, 2, 2 of 3)"
         },
         "indirect_prompt_injection": {
           "status": "VULNERABLE",
@@ -735,7 +735,7 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 4261da1656: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory fc6bb50d8a: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
         },
         "truncate": {
           "status": "reported",
@@ -750,12 +750,12 @@
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 78da2421d9: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 285ef75542: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "forge": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f010dc997d']. They were inserted out of band, or written )"
+          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f09444557f']. They were inserted out of band, or written )"
         },
         "cross_replay": {
           "status": "ERROR",
@@ -765,12 +765,12 @@
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 4a480343c2: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory dad8d9988b: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory c13d121509: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory de7dfdeeba: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
         },
         "memory_injection": {
           "status": "n/a",
@@ -812,7 +812,7 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 7492fe79cf: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory fe6c9e69b8: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
         },
         "truncate": {
           "status": "VULNERABLE",
@@ -827,12 +827,12 @@
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory d3c5022925: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 61a7283b4b: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "forge": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f049765241']. They were inserted out of band, or written )"
+          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f06366247f']. They were inserted out of band, or written )"
         },
         "cross_replay": {
           "status": "ERROR",
@@ -842,12 +842,12 @@
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 663c297aef: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 51c176771c: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory a95c22d416: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory b2decb6345: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
         },
         "memory_injection": {
           "status": "n/a",
@@ -1032,6 +1032,83 @@
           "status": "VULNERABLE",
           "verdict": "surfaced",
           "detail": "self-tagged memory passed the trust filter (external: kept out 5 of 5; laundered: kept out 5 of 5; agent-laundered: 5 of 5)"
+        }
+      }
+    },
+    {
+      "label": "acrf-memory-guard",
+      "checked_at": "read",
+      "measured_on": null,
+      "cells": {
+        "tamper": {
+          "status": "safe",
+          "verdict": "rejected",
+          "detail": "detected on reload (read_safe(ctx-A::02): Memory integrity check failed. Expected: sha256:7ca88280bdf5e6a1a715919b1... Got: sha256:681acbfb71f740e3ffc1a7d4f... Entry was modified after signing.)"
+        },
+        "truncate": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "delete_middle": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "reorder": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "forge": {
+          "status": "safe",
+          "verdict": "rejected",
+          "detail": "detected on reload (read_safe(ctx-A::05): Memory integrity check failed. Expected: sha256:d457917a206a2ddf118409db8... Got: sha256:76f303877bda01a1960075e50... Entry was modified after signing.)"
+        },
+        "cross_replay": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "rollback_replay": {
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
+        },
+        "metadata_tamper": {
+          "status": "safe",
+          "verdict": "rejected",
+          "detail": "detected on reload (read_safe(ctx-A::02): Memory integrity check failed. Expected: sha256:b5b81806feb911b5e4afe6dca... Got: sha256:681acbfb71f740e3ffc1a7d4f... Entry was modified after signing.)"
+        },
+        "memory_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "cross_session_bleed": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "retrieval_hijack": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "indirect_prompt_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "update_poisoning": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "metadata_poisoning": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
         }
       }
     },
