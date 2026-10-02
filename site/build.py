@@ -63,6 +63,7 @@ ROW_NAMES = {
     "openfang(model,fixed)": ("OpenFang model, tip-persistence fix", "reference model of a hash chain"),
     "langgraph-sqlite": ("LangGraph SqliteSaver", "langgraph-checkpoint-sqlite 3.1.1"),
     "langgraph-postgres": ("LangGraph PostgresSaver", "langgraph-checkpoint-postgres 3.1.2"),
+    "langgraph-redis": ("LangGraph RedisSaver", "langgraph-checkpoint-redis 0.5.2"),
     "langgraph-sqlite-store": ("LangGraph SqliteStore", "langgraph-checkpoint-sqlite 3.1.1"),
     "openai-agents-sqlite-session": ("OpenAI Agents SDK SQLiteSession", "openai-agents 0.20.0"),
     "llamaindex-memory-sqlite": ("LlamaIndex Memory, SQLAlchemy chat store", "llama-index-core 0.14.24"),
@@ -449,7 +450,7 @@ def build():
     global d_date, d_platform
     d, rows = load()
     d_date, d_platform = d["date"], d["platform"]
-    at_rest_keys = [k for k in ["openfang(model,fixed)", "langgraph-sqlite", "langgraph-postgres", "openai-agents-sqlite-session", "llamaindex-memory-sqlite", "letta-block-history",
+    at_rest_keys = [k for k in ["openfang(model,fixed)", "langgraph-sqlite", "langgraph-postgres", "langgraph-redis", "openai-agents-sqlite-session", "llamaindex-memory-sqlite", "letta-block-history",
                                 "mem0-qdrant-local", "inspeximus-default", "inspeximus-rcpt+dir",
                                 "inspeximus-rcpt+dir+home", "langgraph-ledger", "memory-blackbox-md", "atelya-attest-chain", "atelya-attest-chain+anchor", "continuum-events", "continuum-events+attest", "acrf-memory-guard"] if k in rows]
     fd_keys = [k for k in ["langgraph-sqlite-store", "letta-archival", "mem0-qdrant-local",

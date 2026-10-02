@@ -149,6 +149,13 @@ def full_scorecard() -> str:
     except ImportError:
         LangGraphPostgresAdapter = None  # noqa: N806
     try:
+        import langgraph.checkpoint.redis  # noqa: F401
+        from agmi.adapters.langgraph_redis import LangGraphRedisAdapter, redis_uri
+        if not redis_uri():
+            LangGraphRedisAdapter = None  # noqa: N806 - row only with AGMI_REDIS_URI
+    except ImportError:
+        LangGraphRedisAdapter = None  # noqa: N806
+    try:
         import continuum  # noqa: F401
         from agmi.adapters.continuum_events import (
             ContinuumEventsAdapter, ContinuumEventsAttestedAdapter,
@@ -206,6 +213,7 @@ def full_scorecard() -> str:
         ("openfang(model,fixed)", OpenFangAdapter(strict_tip=True), None),
         ("langgraph-sqlite", LangGraphSqliteAdapter(), None),
         *([("langgraph-postgres", LangGraphPostgresAdapter(), None)] if LangGraphPostgresAdapter else []),
+        *([("langgraph-redis", LangGraphRedisAdapter(), None)] if LangGraphRedisAdapter else []),
         *([("openai-agents-sqlite-session", openai_session, None)] if openai_session else []),
         *([("llamaindex-memory-sqlite", llamaindex_memory, None)] if llamaindex_memory else []),
         *([("langgraph-sqlite-store", None, lg_store)] if lg_store else []),

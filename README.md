@@ -31,6 +31,7 @@ The eight edits are the ones proposed as the test method for IETF draft-han-bmwg
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | LangGraph `SqliteSaver` | langgraph-checkpoint-sqlite 3.1.1 | accepted | accepted | accepted | accepted | accepted | accepted | accepted | accepted |
 | LangGraph `PostgresSaver` | langgraph-checkpoint-postgres 3.1.2 on PostgreSQL 16 | accepted | accepted | accepted | accepted | accepted | accepted | accepted | accepted |
+| LangGraph `RedisSaver` | langgraph-checkpoint-redis 0.5.2 on Redis 8 | accepted | accepted | accepted | accepted | accepted | accepted | accepted | accepted |
 | OpenAI Agents SDK `SQLiteSession` | openai-agents 0.20.0 | accepted | accepted | accepted | accepted | accepted | accepted | accepted | accepted |
 | Letta core memory checkpoint history | letta 0.16.8 | accepted | accepted | accepted | accepted | accepted | accepted | accepted | accepted |
 | Mem0 local Qdrant store | mem0ai 2.0.20 | accepted | accepted | accepted | accepted | accepted | error | accepted | accepted |
@@ -336,6 +337,18 @@ Every attack carries a version (`memory_injection@v2`, `retrieval_hijack@v3`, an
 | verify() | True if `get()` returns a checkpoint and `list()` walks the thread without raising |
 
 The checkpointer production LangGraph runs on, and the same result as `SqliteSaver`: no integrity logic on the store, so all eight edits are served as genuine on the next `get()`, including the tampered head as the state the agent resumes from. The row runs only when `AGMI_POSTGRES_URI` is set, creates its own schema per run and drops it on teardown, so a shared database is never touched. The findings filed on `SqliteSaver` (langchain-ai/langgraph#9004, #9099) apply unchanged; the head anchor and the AAD binding under review there are the fixes.
+
+### LangGraph `RedisSaver`
+
+| | |
+|---|---|
+| Measured on | langgraph-checkpoint-redis 0.5.2 (maintained by Redis), Redis 8 in Docker with the JSON and search modules it ships, macOS arm64, Python 3.12 |
+| What is targeted | One JSON document per checkpoint at `checkpoint:<thread>:<ns>:<id>` with the checkpoint and its metadata inline, plus a `checkpoint_latest:<thread>:<ns>` string holding the key of the newest document |
+| Seeded through | `RedisSaver.put()` |
+| Read back through | `RedisSaver.get()`, which follows the pointer, and `.list()`, which queries the search index |
+| verify() | True if `get()` returns a checkpoint and `list()` walks the thread without raising |
+
+The third official LangGraph checkpointer, and the third to serve all eight. The one structural difference from SQLite and Postgres is the `latest` pointer, and it changes what truncation looks like, so both forms are recorded. Delete the newest document and leave the pointer in place: `get()` returns None and the thread reads as empty, which is a loss of memory, not a detection, while `list()` still returns the older checkpoints. Move the pointer to the new tip, which an attacker with store access does in the same edit, and the rollback is served silently; that is the form the T2 cell scores. A forged document is made the head the same way. Content edits, swaps, cross-thread and rollback copies and metadata edits touch the documents only and are served on the next `get()`. The row runs only when `AGMI_REDIS_URI` is set, uses thread ids under a random prefix, and deletes its own keys on teardown.
 
 ### LangGraph `SqliteSaver`
 
