@@ -128,10 +128,13 @@ def full_scorecard() -> str:
         ledger_row = None
     try:
         import memory_blackbox  # noqa: F401
-        from agmi.adapters.memory_blackbox import MemoryBlackboxMdAdapter
-        mbb_row = ("memory-blackbox-md", MemoryBlackboxMdAdapter(), None)
+        from agmi.adapters.memory_blackbox import (
+            MemoryBlackboxMdAdapter, MemoryBlackboxMdRestartAdapter,
+        )
+        mbb_rows = [("memory-blackbox-md", MemoryBlackboxMdAdapter(), None),
+                    ("memory-blackbox-md+restart", MemoryBlackboxMdRestartAdapter(), None)]
     except ImportError:
-        mbb_row = None
+        mbb_rows = []
     try:
         import amem_attest  # noqa: F401
         from agmi.adapters.atelya_attest import (
@@ -222,7 +225,7 @@ def full_scorecard() -> str:
         *([mem0_row] if mem0_row else []),
         *inspeximus_rows,
         *([ledger_row] if ledger_row else []),
-        *([mbb_row] if mbb_row else []),
+        *mbb_rows,
         *atelya_rows,
         *continuum_rows,
         *([acrf_row] if acrf_row else []),

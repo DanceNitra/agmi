@@ -15,13 +15,26 @@ MEMORY.md, keeps a BLAKE3 digest of each, and on every `scan()` records a
 provenance write for any file whose digest changed, so an out-of-band
 edit is captured and attributable.
 
-This row measures the watcher on a MEMORY.md store, one memory per
+These rows measure the watcher on a MEMORY.md store, one memory per
 line, with a second watched file standing in for the second context. The
 agent's read path is the file itself, unchanged, so detection is the
 scan: a scan that records a write for the watched file after the edit is
-"reported". The agent process stays up between the edit and the scan,
-so the watcher's in-process digest is the baseline. The ledger itself is
-never edited by the suite; the eight edits target the memory store.
+"reported". Two attacker positions, as with the inspeximus rows:
+
+* `memory-blackbox-md`: the agent process stays up between the edit and
+  the scan, so the watcher's in-process digest is the baseline.
+* `memory-blackbox-md+restart`: the agent restarts between the edit and
+  the scan, so the baseline is whatever the new process establishes.
+
+On 0.1.0 the restart row served all eight: `baseline()` seeded the
+watcher from the file bytes, so an edit made while the agent was down
+became the trusted state. Reported privately to the maintainer on
+2 October 2026 and fixed the same day in 0.1.1 (lavkumarv/memory-blackbox
+PR #31): `baseline()` now takes the ledger's last write for each watched
+file as the trusted state, and a file the ledger has never seen is
+recorded once so a cold start is distinguishable from a mismatch. On
+0.1.1 both rows report all eight. The ledger itself is never edited by
+the suite; the eight edits target the memory store.
 """
 
 from __future__ import annotations
@@ -194,3 +207,19 @@ class MemoryBlackboxMdAdapter(MemoryAdapter):
                                   f"(record {hits[0].record_id[:8]})")
             return False
         return True
+
+
+class MemoryBlackboxMdRestartAdapter(MemoryBlackboxMdAdapter):
+    """memory.md watcher, agent process restarted between the edit and the scan."""
+
+    name = "memory-blackbox-md+restart"
+
+    def reload(self) -> None:
+        # A restart: the ledger connection closes, a new engine opens the
+        # same ledger and the watcher baselines again.
+        try:
+            self._bb.ledger.connection.close()
+        except Exception:  # noqa: BLE001
+            pass
+        self._open_watcher()
+        self._watch.baseline()

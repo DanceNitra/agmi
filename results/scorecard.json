@@ -889,7 +889,7 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 4a86d65998: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory fa89261d37: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
         },
         "truncate": {
           "status": "reported",
@@ -904,12 +904,12 @@
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory e1d066802e: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 4b01be04d8: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "forge": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0f1f36675']. They were inserted out of band, or written )"
+          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0f1775588']. They were inserted out of band, or written )"
         },
         "cross_replay": {
           "status": "ERROR",
@@ -919,12 +919,12 @@
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 78a0a6c9e4: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 4b1e0e4dd4: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory a0dc588765: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory df625e6a88: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
         },
         "memory_injection": {
           "status": "n/a",
@@ -966,7 +966,7 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory e8546ec0b3: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory 5cf8b3d929: its TEXT or KEY no longer matches its write receipt (edited after write)'])"
         },
         "truncate": {
           "status": "VULNERABLE",
@@ -981,12 +981,12 @@
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 25977ff43e: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 4380f5ab45: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "forge": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f0c4b18712']. They were inserted out of band, or written )"
+          "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f08642e42e']. They were inserted out of band, or written )"
         },
         "cross_replay": {
           "status": "ERROR",
@@ -996,12 +996,12 @@
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory 75e05be768: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
+          "detail": "detected on reload (verify_writes: ['memory 60a361ab1b: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer)"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_writes: ['memory b555ebcfbe: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
+          "detail": "detected on reload (verify_writes: ['memory b4d5de5afc: a field its receipt commits to no longer matches its write receipt (edited after write)'])"
         },
         "memory_injection": {
           "status": "n/a",
@@ -1197,22 +1197,22 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be4dc-9f5a-6cd0-8002-d4729641b61e)"
+          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be650-e8af-61c2-8002-0adf59a96f4a)"
         },
         "truncate": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint missing from saver: 1f1be4dc-9f69-612c-8003-9fbbf183ddf0; checkpoint missing from saver: 1f1be4dc-9f69-679e-8004-8ba85095bae4)"
+          "detail": "detected on reload (verify_thread: checkpoint missing from saver: 1f1be650-e8bd-6f92-8003-e1b099e5a260; checkpoint missing from saver: 1f1be650-e8be-660e-8004-e4253adc524b)"
         },
         "delete_middle": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint missing from saver: 1f1be4dc-9f76-6f7a-8002-c80423a57f1c)"
+          "detail": "detected on reload (verify_thread: checkpoint missing from saver: 1f1be650-e8cb-6b88-8002-2757d4a176b3)"
         },
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be4dc-9f83-6c7a-8001-0a11e9602d93; checkpoint content drifted: 1f1be4dc-9f84-6396-8002-50bdc8f2340c)"
+          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be650-e8d8-6c5c-8001-409cf571a043; checkpoint content drifted: 1f1be650-e8d9-63d2-8002-e5ca9d340026)"
         },
         "forge": {
           "status": "VULNERABLE",
@@ -1222,12 +1222,12 @@
         "cross_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be4dc-9fa0-6370-8004-0558020d0fd9)"
+          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be650-e8f6-616c-8004-3f398be61489)"
         },
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be4dc-9fb6-6a9e-8004-54c9b8865c65)"
+          "detail": "detected on reload (verify_thread: checkpoint content drifted: 1f1be650-e906-6c9c-8004-b6c8e02a6dc8)"
         },
         "metadata_tamper": {
           "status": "VULNERABLE",
@@ -1274,42 +1274,119 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fc34))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
         },
         "truncate": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fc34))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
         },
         "delete_middle": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fc34))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
         },
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fc34))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
         },
         "forge": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fc34))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
         },
         "cross_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fc34))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
         },
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fc34))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fc34))"
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
+        },
+        "memory_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "cross_session_bleed": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "retrieval_hijack": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "indirect_prompt_injection": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "update_poisoning": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        },
+        "metadata_poisoning": {
+          "status": "n/a",
+          "verdict": "n/a",
+          "detail": ""
+        }
+      }
+    },
+    {
+      "label": "memory-blackbox-md+restart",
+      "checked_at": "audit",
+      "measured_on": null,
+      "cells": {
+        "tamper": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
+        },
+        "truncate": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
+        },
+        "delete_middle": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
+        },
+        "reorder": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
+        },
+        "forge": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
+        },
+        "cross_replay": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
+        },
+        "rollback_replay": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
+        },
+        "metadata_tamper": {
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (scan recorded an out-of-band write to MEMORY.md (record 01a0fccc))"
         },
         "memory_injection": {
           "status": "n/a",
@@ -1505,7 +1582,7 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=3 event_id='event_1b32e15e7498446032949669314e7bc5' detail='stored hash does not match recomputed digest')"
+          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=3 event_id='event_9504414a05d5f64684533334721eb0b5' detail='stored hash does not match recomputed digest')"
         },
         "truncate": {
           "status": "VULNERABLE",
@@ -1515,12 +1592,12 @@
         "delete_middle": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='SEQUENCE_GAP' run_id='agmi-run-A' sequence=4 event_id='event_b5659af56d5a0b076fe15673d34dda61' detail='expected sequence 3')"
+          "detail": "detected on reload (verify_events: kind='SEQUENCE_GAP' run_id='agmi-run-A' sequence=4 event_id='event_826ebf65f98fe77f4970d4312dbe3ffa' detail='expected sequence 3')"
         },
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=2 event_id='event_7573206892059ca7093427f6e5bc9715' detail='stored hash does not match recomputed digest')"
+          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=2 event_id='event_f6f78163f7bc06c35e0f64829c045fc2' detail='stored hash does not match recomputed digest')"
         },
         "forge": {
           "status": "reported",
@@ -1530,17 +1607,17 @@
         "cross_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=5 event_id='event_51ea68c38900fca41898bd42a074a125' detail='stored hash does not match recomputed digest')"
+          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=5 event_id='event_e477d6971d72eb9028f67cb6fcbfbd4f' detail='stored hash does not match recomputed digest')"
         },
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=5 event_id='event_7cfb4f33dff4c9b5b4447fe6a66d2402' detail='stored hash does not match recomputed digest')"
+          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=5 event_id='event_ea0e1a6d534789999095b1d4137e42ff' detail='stored hash does not match recomputed digest')"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=3 event_id='event_201eced27de07684b6cc8d08e65fe67b' detail='stored hash does not match recomputed digest')"
+          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=3 event_id='event_004d80b23ad540ab58242320fe8af91f' detail='stored hash does not match recomputed digest')"
         },
         "memory_injection": {
           "status": "n/a",
@@ -1582,7 +1659,7 @@
         "tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=3 event_id='event_b773d024802b11e600250ad3d27050ec' detail='stored hash does not match recomputed digest')"
+          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=3 event_id='event_f19f19ee5b19fd485c8753002238bc01' detail='stored hash does not match recomputed digest')"
         },
         "truncate": {
           "status": "reported",
@@ -1592,12 +1669,12 @@
         "delete_middle": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='SEQUENCE_GAP' run_id='agmi-run-A' sequence=4 event_id='event_d1a97e48f436f93c1e833ef054300fa6' detail='expected sequence 3')"
+          "detail": "detected on reload (verify_events: kind='SEQUENCE_GAP' run_id='agmi-run-A' sequence=4 event_id='event_021797a6039dd5067070a389ed26486a' detail='expected sequence 3')"
         },
         "reorder": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=2 event_id='event_8a58885d82cc689fb48321fc67473ebb' detail='stored hash does not match recomputed digest')"
+          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=2 event_id='event_08f038799e4e119ecb5881a84a72b81a' detail='stored hash does not match recomputed digest')"
         },
         "forge": {
           "status": "reported",
@@ -1607,17 +1684,17 @@
         "cross_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=5 event_id='event_5690276f3c90ed999c1f1e18a061b865' detail='stored hash does not match recomputed digest')"
+          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=5 event_id='event_beb180f4127a7e721c08da3ef25df93c' detail='stored hash does not match recomputed digest')"
         },
         "rollback_replay": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=5 event_id='event_8f2887e898a4454b96d36d4e26c3dff6' detail='stored hash does not match recomputed digest')"
+          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=5 event_id='event_1e1a71c5c1059825e8e536645be9dc58' detail='stored hash does not match recomputed digest')"
         },
         "metadata_tamper": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=3 event_id='event_e7640b0ec96be5eb5e56786619392e0b' detail='stored hash does not match recomputed digest')"
+          "detail": "detected on reload (verify_events: kind='TAMPERED_CONTENT' run_id='agmi-run-A' sequence=3 event_id='event_a259d30ec0ad78128ea01e7d8696c081' detail='stored hash does not match recomputed digest')"
         },
         "memory_injection": {
           "status": "n/a",

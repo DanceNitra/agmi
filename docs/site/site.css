@@ -46,6 +46,7 @@ p{max-width:68ch}em{font-style:normal;font-weight:600}
 .matrix thead th.corner{text-align:left;padding-left:14px}.matrix abbr{text-decoration:none;border:0;cursor:help}
 .matrix tbody th{text-align:left;padding:10px 14px;font-weight:500;max-width:320px;background:var(--paper);position:sticky;left:0}
 .rowname{display:block}.rowver{display:block;color:var(--ink2);font-size:12.5px;font-family:var(--mono);margin-top:2px}
+a.rowver{text-decoration:underline dotted;text-underline-offset:3px}a.rowver:hover{color:var(--ink)}
 .matrix td{text-align:center}.cellbtn{all:unset;display:block;width:100%;padding:10px 6px;cursor:pointer;font:500 13.5px var(--mono);text-align:center}
 .cellbtn:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
 .v-acc .cellbtn{color:var(--acc);background:var(--accbg)}.v-rej .cellbtn{color:var(--rej);background:var(--rejbg)}

@@ -39,7 +39,8 @@ The eight edits are the ones proposed as the test method for IETF draft-han-bmwg
 | inspeximus, receipts on with a key, attacker holds the store's directory | inspeximus 3.0.0 | reported | reported | reported | reported | reported | error | reported | reported |
 | inspeximus, receipts on with a key, attacker also holds the user's config home | inspeximus 3.0.0 | reported | accepted | reported | reported | reported | error | reported | reported |
 | langgraph-ledger over `SqliteSaver`, hash-chained ledger, `verify_thread()` audit | langgraph-ledger 0.3.0 | reported | reported | reported | reported | accepted | reported | reported | accepted |
-| memory-blackbox memory.md watcher, agent process alive, scan audit | memory-blackbox 0.1.0 | reported | reported | reported | reported | reported | reported | reported | reported |
+| memory-blackbox memory.md watcher, agent process alive, scan audit | memory-blackbox 0.1.1 | reported | reported | reported | reported | reported | reported | reported | reported |
+| memory-blackbox memory.md watcher, agent restarted before the scan, scan audit | memory-blackbox 0.1.1 (0.1.0 served all eight) | reported | reported | reported | reported | reported | reported | reported | reported |
 | Atelya Attest, keyed hash chain, `verify_chain()` audit | atelya-attest 0.1.1 | reported | accepted | reported | reported | reported | reported | reported | reported |
 | Atelya Attest, keyed hash chain plus anchored head, verify and consistency audit | atelya-attest 0.1.1 | reported | reported | reported | reported | reported | reported | reported | reported |
 | CONTINUUM event log, hash chain, `verify_events()` audit | continuum-agent 0.1.0 | reported | accepted | reported | reported | reported | reported | reported | reported |
@@ -507,13 +508,15 @@ An audit-time design, and a good one for what it logs: every checkpoint the ledg
 
 | | |
 |---|---|
-| Measured on | memory-blackbox 0.1.0, macOS arm64, Python 3.12 |
+| Measured on | memory-blackbox 0.1.1, macOS arm64, Python 3.12 (restart row first measured on 0.1.0) |
 | What is targeted | A MEMORY.md memory file, one memory per line with a trailing HTML comment as its label; AGENTS.md stands in for the second context |
 | Seeded through | the agent writes the file, then `MemoryMdAdapter.scan()` captures the write as a signed provenance record in the ledger |
 | Read back through | the file itself, unchanged |
 | verify() | `scan()` after the edit: a recorded write for MEMORY.md means the watcher saw a change the agent did not make |
 
-memory-blackbox is a flight recorder: a BLAKE3 hash chain, a signed Merkle root and Ed25519 signatures protect its own ledger, and its README places it as post-incident reconstruction rather than a runtime block. The suite never edits the ledger. What it measures is the memory-file watcher, which keeps a digest of each watched file and records an out-of-band write for any file that changed since the last scan. With the agent process alive across the edit, every one of the eight edits changes the digest and is reported on the next scan, including the cross-context copy and the rollback, because the watcher compares bytes and not meaning. The read path is the file, so the agent still acts on the edit until the scan runs.
+memory-blackbox is a flight recorder: a BLAKE3 hash chain, a signed Merkle root and Ed25519 signatures protect its own ledger, and its README places it as post-incident reconstruction rather than a runtime block. The suite never edits the ledger. What it measures is the memory-file watcher, which keeps a digest of each watched file and records an out-of-band write for any file that changed since the last scan.
+
+Two rows. With the agent process alive across the edit, every one of the eight edits changes the digest and is reported on the next scan, including the cross-context copy and the rollback, because the watcher compares bytes and not meaning. With the agent restarted between the edit and the scan, 0.1.0 served all eight: `baseline()` seeded the watcher from the file bytes, so an edit made while the agent was down became the trusted state and the scan had nothing to compare against. That position was reported privately to the maintainer under the project's SECURITY.md on 2 October 2026, held off this table meanwhile, and fixed the same day in 0.1.1 ([PR #31](https://github.com/lavkumarv/memory-blackbox/pull/31)): `baseline()` now takes the ledger's last write for each watched file as the trusted state, and a file the ledger has never seen is recorded once, so a cold start shows in the audit as a first-seen write rather than a mismatch. The maintainer ran this suite against the fix before tagging, and now runs the agmi Action in CI. Re-measured on 0.1.1, both rows report all eight. `tests/test_memory_blackbox.py` carries the reproduction (seed, scan, close, edit, reopen, baseline, scan) so the gap cannot come back unnoticed. In both rows the read path is the file, so the agent still acts on the edit until the scan runs.
 
 ### Atelya Attest
 
@@ -666,6 +669,7 @@ for IETF draft-han-bmwg-agent-security-benchmark metric 5.4.7
 | Memory agent, v1 | Hunt loop over six attacks, three channels and mutations; proof and reproduction script per finding; authorisation gate that fails closed | done |
 | 0.6.0 | Eight at-rest edits T1 to T8 (adds cross-context replay, rollback replay, metadata tamper) with control cases and read/audit detection points, matching the proposed 5.4.7 method | done |
 | 0.6.1 | Control C3, the landed guard, on every edit; the defended rows (acrf-memory-guard, langgraph-ledger, memory-blackbox, Atelya Attest, CONTINUUM) and the LangGraph Postgres and Redis checkpointers; findings filed with LangChain, OpenAI and LlamaIndex; method text in IETF BMWG and OWASP AIMM | done |
+| 0.6.2 | memory-blackbox restart row, before and after the maintainer's fix (0.1.1), the first store fix driven by the suite; every scorecard row links to the code it measures | done |
 | 0.7 | Hosted stores measured through their front door only: AWS Bedrock AgentCore Memory, Google Vertex AI Memory Bank, Zep, Letta Cloud; Graphiti; the inspeximus T6 cells flipped to real verdicts when its maintainer's fix lands | next |
 | Phase 3 | Live targets over HTTP (MCP memory servers, deployed LangGraph and Letta) behind the authorisation gate; obedience oracle that proves the agent acted on the poison; ingestion marking measured on each framework | planned |
 | Phase 4 | Memory agent driving content-only attacks through a real model, with the same proof discipline | planned |

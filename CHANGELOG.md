@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.2 (2 October 2026)
+
+- New row: memory-blackbox memory.md watcher with the agent restarted between the edit and the scan. On 0.1.0 this row served all eight: `baseline()` seeded the watcher from the file bytes. Reported privately to the maintainer, Lav Kumar Vishwakarma, on 2 October 2026 and fixed the same day in memory-blackbox 0.1.1 (PR #31), which takes the ledger's last write as the baseline. Both memory-blackbox rows re-measured on 0.1.1: all eight reported. Adapter `MemoryBlackboxMdRestartAdapter`, same extra `blackbox`; `tests/test_memory_blackbox.py` re-pinned to 0.1.1 and carries the reproduction.
+- Scorecard and site: every row's version links to the code it measures (repo or PyPI page), asked for by the memory-blackbox maintainer.
+
 ## 0.6.1 (2 October 2026)
 
 - README: the one-table summary, the pattern paragraph and the roadmap now describe the sixteen rows on the board (seven frameworks that serve all eight, nine defended rows across six tools), the method paper v2 DOI, and the 0.6.1 and 0.7 scope.

@@ -69,7 +69,8 @@ ROW_NAMES = {
     "llamaindex-memory-sqlite": ("LlamaIndex Memory, SQLAlchemy chat store", "llama-index-core 0.14.24"),
     "acrf-memory-guard": ("acrf-memory-guard, per-entry HMAC over a JSON store", "acrf-memory-guard 0.1.0"),
     "langgraph-ledger": ("langgraph-ledger over SqliteSaver, hash-chained ledger, verify_thread audit", "langgraph-ledger 0.3.0"),
-    "memory-blackbox-md": ("memory-blackbox memory.md watcher, agent process alive, scan audit", "memory-blackbox 0.1.0"),
+    "memory-blackbox-md": ("memory-blackbox memory.md watcher, agent process alive, scan audit", "memory-blackbox 0.1.1"),
+    "memory-blackbox-md+restart": ("memory-blackbox memory.md watcher, agent restarted before the scan, scan audit", "memory-blackbox 0.1.1"),
     "atelya-attest-chain": ("Atelya Attest, keyed hash chain, verify_chain audit", "atelya-attest 0.1.1"),
     "atelya-attest-chain+anchor": ("Atelya Attest, keyed hash chain plus anchored head, verify and consistency audit", "atelya-attest 0.1.1"),
     "continuum-events": ("CONTINUUM event log, hash chain, verify_events audit", "continuum-agent 0.1.0"),
@@ -86,7 +87,42 @@ ROW_NAMES = {
     "naive-mem(unscoped)": ("Reference store, unscoped", "no defence, for calibration"),
     "reference-defended(model)": ("Reference store, defended", "signed writes, quarantine, stuffing check"),
 }
+# Where the code each row measures lives, so a reader can go from a result to the store.
+ROW_REPOS = {
+    "openfang(model,fixed)": "https://github.com/RightNow-AI/openfang",
+    "langgraph-sqlite": "https://github.com/langchain-ai/langgraph/tree/main/libs/checkpoint-sqlite",
+    "langgraph-postgres": "https://github.com/langchain-ai/langgraph/tree/main/libs/checkpoint-postgres",
+    "langgraph-redis": "https://github.com/redis-developer/langgraph-redis",
+    "langgraph-sqlite-store": "https://github.com/langchain-ai/langgraph/tree/main/libs/checkpoint-sqlite",
+    "openai-agents-sqlite-session": "https://github.com/openai/openai-agents-python",
+    "llamaindex-memory-sqlite": "https://github.com/run-llama/llama_index",
+    "acrf-memory-guard": "https://github.com/kannasekar-alt/ACRF",
+    "langgraph-ledger": "https://pypi.org/project/langgraph-ledger/",
+    "memory-blackbox-md": "https://github.com/lavkumarv/memory-blackbox",
+    "memory-blackbox-md+restart": "https://github.com/lavkumarv/memory-blackbox",
+    "atelya-attest-chain": "https://github.com/RonaldSit/atelya",
+    "atelya-attest-chain+anchor": "https://github.com/RonaldSit/atelya",
+    "continuum-events": "https://github.com/Cyrax321/CONTINUUM",
+    "continuum-events+attest": "https://github.com/Cyrax321/CONTINUUM",
+    "letta-block-history": "https://github.com/letta-ai/letta",
+    "letta-archival": "https://github.com/letta-ai/letta",
+    "mem0-qdrant-local": "https://github.com/mem0ai/mem0",
+    "inspeximus-default": "https://github.com/DanceNitra/inspeximus",
+    "inspeximus-rcpt+dir": "https://github.com/DanceNitra/inspeximus",
+    "inspeximus-rcpt+dir+home": "https://github.com/DanceNitra/inspeximus",
+}
+
+def rowver(label, ver):
+    """The version cell: a link to the measured code when one is known."""
+    url = ROW_REPOS.get(label)
+    if not url:
+        return f'<span class="rowver">{esc(ver)}</span>'
+    return f'<a class="rowver" href="{esc(url)}" rel="noopener">{esc(ver)}</a>'
+
 FINDINGS = [
+    ("A vendor fix driven by the suite: memory-blackbox restart gap, reported and fixed in a day", "2026-10-02",
+     "With the agent process alive, the memory-blackbox memory.md watcher reports all eight edits on scan. With the agent restarted between the edit and the scan, 0.1.0 served all eight: baseline() seeded the watcher from the file bytes, so an edit made while the agent was down became the trusted state. The maintainer was told privately under the project's security policy on the morning of 2 October; the restart row was held back from the scorecard meanwhile. The fix shipped as 0.1.1 the same day: baseline() now takes the ledger's last write for each watched file as the trusted state, a file the ledger has never seen is recorded once so a cold start reads differently from a mismatch, and the maintainer ran the suite against the fix before tagging. Re-measured on 0.1.1, both rows report all eight. The repo now has private vulnerability reporting switched on and credits the report in its release notes and SECURITY.md.",
+     "https://github.com/lavkumarv/memory-blackbox/pull/31"),
     ("The suite catches two of its own no-op edits (control C3)", "2026-09-30",
      "The inspeximus maintainer found that on the inspeximus and Mem0 rows the T6 cross-context replay was a no-op: the victim pool was read from both contexts, so the donor was copied onto itself and the cell scored as accepted on an edit that never happened. The earlier finding that a receipt does not bind the owning user rested on that no-op and is withdrawn; with the pool scoped to the first context, both receipt rows report T6. A third control now runs before every verdict: each attack proves its edit landed as intended, and a cell whose edit did not land reads error. That control also found the Mem0 T4 reorder was a no-op (the adapter wrote each point back under its own id); fixed, and Mem0 still accepts it on a real swap. Those cells read error until the scoped victim pool lands.",
      "https://github.com/tech4biz-yasha/agmi/issues/5"),
@@ -382,7 +418,7 @@ def matrix(d, rows, keys, cols, kind):
         r = rows[label]
         name, ver = ROW_NAMES.get(label, (label, ""))
         body += (f'<tr><th scope="row"><span class="rowname">{esc(name)}</span>'
-                 f'<span class="rowver">{esc(ver)}</span></th>'
+                 f'{rowver(label, ver)}</th>'
                  + "".join(cell(r, a) for a, _, _ in cols) + "</tr>")
     return (f'<div class="matrixwrap"><table class="matrix {kind}"><thead><tr>'
             f'<th scope="col" class="corner">Target</th>{heads}</tr></thead><tbody>{body}</tbody></table></div>')
@@ -452,7 +488,7 @@ def build():
     d_date, d_platform = d["date"], d["platform"]
     at_rest_keys = [k for k in ["openfang(model,fixed)", "langgraph-sqlite", "langgraph-postgres", "langgraph-redis", "openai-agents-sqlite-session", "llamaindex-memory-sqlite", "letta-block-history",
                                 "mem0-qdrant-local", "inspeximus-default", "inspeximus-rcpt+dir",
-                                "inspeximus-rcpt+dir+home", "langgraph-ledger", "memory-blackbox-md", "atelya-attest-chain", "atelya-attest-chain+anchor", "continuum-events", "continuum-events+attest", "acrf-memory-guard"] if k in rows]
+                                "inspeximus-rcpt+dir+home", "langgraph-ledger", "memory-blackbox-md", "memory-blackbox-md+restart", "atelya-attest-chain", "atelya-attest-chain+anchor", "continuum-events", "continuum-events+attest", "acrf-memory-guard"] if k in rows]
     fd_keys = [k for k in ["langgraph-sqlite-store", "letta-archival", "mem0-qdrant-local",
                            "inspeximus-default", "inspeximus-defended", "inspeximus-defended-key",
                            "naive-mem(scoped)", "naive-mem(unscoped)", "reference-defended(model)"] if k in rows]
@@ -554,7 +590,7 @@ def build():
             r = rows[k]
             name, ver = ROW_NAMES.get(k, (k, ""))
             mo = r.get("measured_on") or ver
-            out += f'<details class="target"><summary><span>{esc(name)}</span><span class="rowver">{esc(ver)}</span></summary><p class="mo">{esc(mo)}</p><ul>'
+            out += f'<details class="target"><summary><span>{esc(name)}</span>{rowver(k, ver)}</summary><p class="mo">{esc(mo)}</p><ul>'
             for a, c in r["cells"].items():
                 if c["verdict"] == "n/a":
                     continue
@@ -705,6 +741,7 @@ Zenodo. https://doi.org/10.5281/zenodo.22860886</code></pre>
         ("Memory agent v1", "Hunt loop over six attacks, three channels and mutations; proof and reproduction script per finding; authorisation gate that fails closed", "done"),
         ("0.6.0", "Eight at-rest edits T1 to T8 with control cases and read/audit detection points, matching the proposed IETF 5.4.7 method; agmi-check and the GitHub Action", "done"),
         ("0.6.1", "Control C3, the landed guard: every edit proves it landed as intended before a verdict; OpenAI Agents SDK and LlamaIndex rows; companion Internet-Draft filed", "done"),
+        ("0.6.2", "memory-blackbox restart row, before and after the maintainer's fix (0.1.1); every scorecard row links to the code it measures", "done"),
         ("Phase 3", "Live targets over HTTP (MCP memory servers, deployed LangGraph and Letta) behind the authorisation gate; obedience oracle that proves the agent acted on the poison; ingestion marking measured per framework", "next"),
         ("Phase 4", "Memory agent driving content-only attacks through a real model, same proof discipline", "planned"),
         ("0.9", "Deserialization safety, and a reference integrity layer (a hash chain over checkpoint ids) offered upstream as an optional mode", "planned"),
@@ -729,7 +766,7 @@ Zenodo. https://doi.org/10.5281/zenodo.22860886</code></pre>
 <dt>OpenAI Agents SDK</dt><dd>SQLiteSession. All eight edits accepted; <a href="https://github.com/openai/openai-agents-python/issues/5176">#5176</a> was closed with a documentation change stating the session store trusts its storage.</dd>
 <dt>LlamaIndex</dt><dd>Memory on the SQLAlchemy chat store. All eight edits accepted; <a href="https://github.com/run-llama/llama_index/issues/23246">#23246</a> is open, with a community documentation note in review.</dd>
 <dt>langgraph-ledger</dt><dd>A hash-chained JSONL ledger beside any LangGraph checkpointer, with <code>verify_thread()</code> re-hashing every logged checkpoint against the store. Reports a changed, removed, swapped, cross-thread or rolled-back checkpoint on audit; serves a forged checkpoint the ledger never logged (it becomes the head on resume and the audit does not look for it) and a metadata edit (the digest covers the checkpoint, not its metadata). The read path is the inner checkpointer, unchanged.</dd>
-<dt>memory-blackbox</dt><dd>A signed, hash-chained provenance ledger with a watcher for memory files such as MEMORY.md. Measured on the watcher with the agent process alive across the edit: every one of the eight edits changes the file's digest and the next scan records it as an out-of-band write, so all eight are reported on audit. The ledger itself is out of the suite's scope and was not edited.</dd>
+<dt>memory-blackbox</dt><dd>A signed, hash-chained provenance ledger with a watcher for memory files such as MEMORY.md. Measured as two rows: with the agent process alive across the edit, every one of the eight edits changes the file's digest and the next scan records it as an out-of-band write; with the agent restarted between the edit and the scan, 0.1.0 served all eight because the new process baselined from the file. Reported privately and fixed the same day in 0.1.1 (<a href="https://github.com/lavkumarv/memory-blackbox/pull/31" rel="noopener">PR #31</a>): the ledger's last write is now the baseline, and both rows report all eight. The first fix in a store driven by the suite; the maintainer runs the agmi Action in CI. The ledger itself is out of the suite's scope and was not edited.</dd>
 <dt>Atelya Attest</dt><dd>A keyed hash chain over the agent's memory op-log, with an optional head checkpoint in a ledger kept under separate control. Measured as two rows. The chain alone reports a changed, deleted, swapped, forged, cross-context or rolled-back entry and a relabelled one, and serves tail truncation, since a shorter chain is still a valid chain. With the anchored head, the truncation is reported too: all eight. The README says exactly this, and the measurement agrees.</dd>
 <dt>CONTINUUM</dt><dd>A hash-chained, append-only event log an agent recovers from, with <code>verify_events()</code> naming each violation by kind and sequence, and <code>continuum attest</code> signing the chain head. Measured as two rows: the chain alone reports seven of eight and serves tail truncation; with the signed head and the check <code>attest-verify</code> performs, all eight. The second package whose README boundary and measurement agree.</dd>
 <dt>acrf-memory-guard</dt><dd>Per-entry HMAC checked on read (the ACRF-04 pattern). The first product on the scorecard that claims tamper evidence: refuses a changed, forged or relabelled entry on the read path, and serves a missing, swapped, cross-user or rolled-back genuine entry, since the signature covers one entry's bytes and not its slot. Its own README says rollback is out of scope; the measurement agrees and adds the other four.</dd>
@@ -883,6 +920,7 @@ p{max-width:68ch}em{font-style:normal;font-weight:600}
 .matrix thead th.corner{text-align:left;padding-left:14px}.matrix abbr{text-decoration:none;border:0;cursor:help}
 .matrix tbody th{text-align:left;padding:10px 14px;font-weight:500;max-width:320px;background:var(--paper);position:sticky;left:0}
 .rowname{display:block}.rowver{display:block;color:var(--ink2);font-size:12.5px;font-family:var(--mono);margin-top:2px}
+a.rowver{text-decoration:underline dotted;text-underline-offset:3px}a.rowver:hover{color:var(--ink)}
 .matrix td{text-align:center}.cellbtn{all:unset;display:block;width:100%;padding:10px 6px;cursor:pointer;font:500 13.5px var(--mono);text-align:center}
 .cellbtn:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
 .v-acc .cellbtn{color:var(--acc);background:var(--accbg)}.v-rej .cellbtn{color:var(--rej);background:var(--rejbg)}
