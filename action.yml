@@ -1,8 +1,5 @@
 name: "agmi: Agent Memory Integrity check"
-description: >-
-  Runs the agmi at-rest edits against a memory-store adapter and fails the
-  job if the store serves edited memory as genuine. Verdicts follow the
-  method proposed for IETF draft-han-bmwg-agent-security-benchmark 5.4.7.
+description: Fails your CI job if your agent memory store serves tampered memory as genuine. Eight edits, IETF BMWG 5.4.7 verdicts.
 author: "Yasha Khandelwal"
 branding:
   icon: "shield"
