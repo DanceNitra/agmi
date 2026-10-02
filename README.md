@@ -40,6 +40,8 @@ The eight edits are the ones proposed as the test method for IETF draft-han-bmwg
 | memory-blackbox memory.md watcher, agent process alive, scan audit | memory-blackbox 0.1.0 | reported | reported | reported | reported | reported | reported | reported | reported |
 | Atelya Attest, keyed hash chain, `verify_chain()` audit | atelya-attest 0.1.1 | reported | accepted | reported | reported | reported | reported | reported | reported |
 | Atelya Attest, keyed hash chain plus anchored head, verify and consistency audit | atelya-attest 0.1.1 | reported | reported | reported | reported | reported | reported | reported | reported |
+| CONTINUUM event log, hash chain, `verify_events()` audit | continuum-agent 0.1.0 | reported | accepted | reported | reported | reported | reported | reported | reported |
+| CONTINUUM event log, hash chain plus Ed25519-signed head, attest-verify audit | continuum-agent 0.1.0 | reported | reported | reported | reported | reported | reported | reported | reported |
 | acrf-memory-guard, per-entry HMAC over a JSON store, read path | acrf-memory-guard 0.1.0 | rejected | accepted | accepted | accepted | rejected | accepted | accepted | rejected |
 
 The T6 cell on the inspeximus and Mem0 rows reads `error` for now. The inspeximus maintainer found (issue #5) that on those two adapters the edit was a no-op: the victim pool was read from both contexts, so the donor was copied onto itself, and the earlier claim that a receipt does not bind the owning user rested on that no-op and is withdrawn. The landed guard (control C3) now refuses to score the cell until the victim pool is scoped to the first context; with that scoped, both receipt rows report T6 and Mem0 accepts it on a real edit. Those verdicts land with the fix, regenerated from a run.
@@ -498,6 +500,18 @@ memory-blackbox is a flight recorder: a BLAKE3 hash chain, a signed Merkle root 
 | verify() | `verify_chain()`; the anchored row also runs `consistency()` against the last checkpoint |
 
 Two rows from one package, because its README draws exactly this line. The chain alone names the first bad entry for a changed payload (T1), a middle deletion (T3), a swap (T4), a forged entry (T5), an entry copied from the other context (T6), an older entry over the newest (T7) and a changed timestamp (T8), since all of those break a sequence number, a link or a hash. Tail truncation (T2) passes, because a shorter chain is still a valid chain. The anchored row checkpoints the head (sequence, length, root) into a ledger the attacker cannot reach, and `consistency()` reports the truncation as history vanished below an anchored checkpoint: all eight. The chain is keyed in both rows; the README is clear that a keyless chain can be rewritten and re-chained by an attacker who holds the file, and that the anchor is the answer to that, which the suite's edits do not attempt. Detection is on the audit in both rows: the agent replays whatever the file holds until `verify` runs.
+
+### CONTINUUM
+
+| | |
+|---|---|
+| Measured on | continuum-agent 0.1.0 (Cyrax321/CONTINUUM), macOS arm64, Python 3.12 |
+| What is targeted | The `events` table of one run in the SQLite store, one row per WORK_COMPLETED event with `sequence`, `event_id`, `type`, `timestamp`, `payload`, `prev_hash` and `hash`; a second run stands in for the second context |
+| Seeded through | `SQLiteStorage.append_event()`; the attested row also signs the head with `sign_chain()` (Ed25519) into a document kept outside the store |
+| Read back through | `project()` over `read_events()`, which rebuilds the agent's state after a restart |
+| verify() | `verify_events()`; the attested row also runs what `continuum attest-verify` runs: signature valid, live head sequence and hash equal to the signed point |
+
+The same boundary as Atelya, measured independently. `verify_events()` names a changed payload (T1), a middle deletion as a sequence gap (T3), a swap, a forged row, a cross-run copy, a rollback and a changed timestamp (T4 to T8) as tampered content at the sequence where it happened. Tail truncation (T2) passes, because the surviving rows still form a valid chain. With the signed head, `attest-verify` reports the truncation as the live head no longer matching the signed sequence: all eight. One store property shaped the edits: `event_id` is unique across the table, so a row moved into another slot keeps that slot's id and brings every other column; the hash covers the id, so the chain is designed to catch exactly that. The chain is keyless SHA-256 and the suite does not re-chain; the README's answer to a re-chaining attacker is the signed head, which the second row measures. Detection is on the audit in both rows: `project()` replays whatever rows are present until the audit runs.
 
 ### acrf-memory-guard
 

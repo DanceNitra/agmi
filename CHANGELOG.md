@@ -2,6 +2,7 @@
 
 ## Unreleased (0.6.1)
 
+- Two new rows: CONTINUUM (continuum-agent 0.1.0), the hash-chained event log alone (reports seven of eight on audit, serves tail truncation) and with the Ed25519-signed head checked the way `attest-verify` does (all eight reported). Adapter `agmi/adapters/continuum_events.py`, extra `continuum`, pinned in `tests/test_continuum_events.py`.
 - Two new rows: Atelya Attest 0.1.1, the keyed hash chain alone (reports seven of eight on audit, serves tail truncation) and the chain with an anchored head (all eight reported). Adapter `agmi/adapters/atelya_attest.py`, extra `atelya`, pinned in `tests/test_atelya_attest.py`.
 - New row: memory-blackbox 0.1.0, the memory.md watcher with the agent process alive across the edit. All eight edits change the file's digest and are reported on the next scan. The ledger is out of scope and untouched. Adapter `agmi/adapters/memory_blackbox.py`, extra `blackbox`, pinned in `tests/test_memory_blackbox.py`.
 - New row: langgraph-ledger 0.3.0 over SqliteSaver, the hash-chained ledger with `verify_thread()` as the audit. Reports T1, T2, T3, T4, T6 and T7 on audit; serves T5 (an unlogged forged checkpoint becomes the head and is never audited) and T8 (metadata is outside the digest). Adapter `agmi/adapters/langgraph_ledger.py`, extra `ledger`, pinned in `tests/test_langgraph_ledger.py`.

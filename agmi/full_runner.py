@@ -142,6 +142,15 @@ def full_scorecard() -> str:
     except ImportError:
         atelya_rows = []
     try:
+        import continuum  # noqa: F401
+        from agmi.adapters.continuum_events import (
+            ContinuumEventsAdapter, ContinuumEventsAttestedAdapter,
+        )
+        continuum_rows = [("continuum-events", ContinuumEventsAdapter(), None),
+                          ("continuum-events+attest", ContinuumEventsAttestedAdapter(), None)]
+    except ImportError:
+        continuum_rows = []
+    try:
         import acrf_memory_guard  # noqa: F401
         from agmi.adapters.acrf_memory_guard import AcrfMemoryGuardAdapter
         acrf_row = ("acrf-memory-guard", AcrfMemoryGuardAdapter(), None)
@@ -199,6 +208,7 @@ def full_scorecard() -> str:
         *([ledger_row] if ledger_row else []),
         *([mbb_row] if mbb_row else []),
         *atelya_rows,
+        *continuum_rows,
         *([acrf_row] if acrf_row else []),
         ("naive-mem(scoped)", None,
          NaiveMemoryAdapter(enforce_user_scope=True)),
