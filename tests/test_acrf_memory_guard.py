@@ -58,9 +58,11 @@ def test_a_signed_entry_from_the_other_user_is_served_under_this_users_key():
     key says ctx-A, read_safe does not compare the two."""
     from acrf_memory_guard import read_safe
     from agmi.adapters.acrf_memory_guard import SECRET
-    a = AcrfMemoryGuardAdapter(); a.setup()
+    a = AcrfMemoryGuardAdapter()
+    a.setup()
     try:
-        a.seed(3); a.seed_other(3)
+        a.seed(3)
+        a.seed_other(3)
         donor = a.read_other_raw()[-1]
         a.replay_onto(2, donor)
         served = read_safe(a.read_all_raw()[2].fields["entry"], SECRET)
