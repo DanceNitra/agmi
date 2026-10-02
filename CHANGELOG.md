@@ -2,6 +2,7 @@
 
 ## Unreleased (0.6.1)
 
+- README: the one-table summary, the pattern paragraph and the roadmap now describe the sixteen rows on the board (seven frameworks that serve all eight, nine defended rows across six tools), the method paper v2 DOI, and the 0.6.1 and 0.7 scope.
 - New row: LangGraph `RedisSaver` (langgraph-checkpoint-redis 0.5.2 on Redis 8), all eight served. Records the `checkpoint_latest` pointer behaviour: newest document deleted with the pointer left alone reads as an empty thread; pointer moved, the rollback is served. Runs only with `AGMI_REDIS_URI` set. Adapter `agmi/adapters/langgraph_redis.py`, extra `redis`, pinned in `tests/test_langgraph_redis.py`.
 - New row: LangGraph `PostgresSaver` (langgraph-checkpoint-postgres 3.1.2 on PostgreSQL 16), all eight edits served, matching `SqliteSaver`. Runs only with `AGMI_POSTGRES_URI` set; own schema per run. Adapter `agmi/adapters/langgraph_postgres.py`, extra `postgres`, pinned in `tests/test_langgraph_postgres.py`.
 - Two new rows: CONTINUUM (continuum-agent 0.1.0), the hash-chained event log alone (reports seven of eight on audit, serves tail truncation) and with the Ed25519-signed head checked the way `attest-verify` does (all eight reported). Adapter `agmi/adapters/continuum_events.py`, extra `continuum`, pinned in `tests/test_continuum_events.py`.

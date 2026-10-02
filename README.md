@@ -10,10 +10,10 @@ A conformance test suite that measures whether AI agent memory and checkpoint st
   <a href="https://github.com/tech4biz-yasha/agmi/actions/workflows/scorecard.yml"><img src="https://github.com/tech4biz-yasha/agmi/actions/workflows/scorecard.yml/badge.svg" alt="scorecard"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="python">
-  <img src="https://img.shields.io/badge/real%20targets-3-green.svg" alt="targets">
+  <img src="https://img.shields.io/badge/stores%20measured-13-green.svg" alt="stores measured">
 </p>
 
-[![Preprint DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22765627.svg)](https://doi.org/10.5281/zenodo.22765627)
+[![Method paper DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22995111.svg)](https://doi.org/10.5281/zenodo.22995111)
 [![SSRN](https://img.shields.io/badge/SSRN-7461118-blue)](https://ssrn.com/abstract=7461118)
 [![Software DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22860886.svg)](https://doi.org/10.5281/zenodo.22860886)
 [![PyPI](https://img.shields.io/pypi/v/agent-memory-integrity)](https://pypi.org/project/agent-memory-integrity/)
@@ -23,7 +23,7 @@ A conformance test suite that measures whether AI agent memory and checkpoint st
 
 ## The result in one table
 
-Three of the most used agent memory layers were seeded through their own APIs, edited behind their backs, and asked to read their memory again. None of them noticed.
+Thirteen agent memory and checkpoint stores were seeded through their own APIs, edited behind their backs, and asked to read their memory again. The seven that make no integrity claim, all three official LangGraph checkpointers among them, served every edit as genuine. The six that do make a claim were measured against it, and the table shows exactly where each one holds and where it stops.
 
 The eight edits are the ones proposed as the test method for IETF draft-han-bmwg-agent-security-benchmark metric 5.4.7: T1 content tamper, T2 tail truncation, T3 middle deletion, T4 reordering, T5 forged insertion, T6 cross-context replay, T7 rollback replay, T8 metadata tamper. T6 and T7 use only bytes the store itself wrote, in the wrong place; they are the edits that separate encryption from integrity.
 
@@ -50,9 +50,9 @@ The T6 cell on the inspeximus and Mem0 rows reads `error` for now. The inspeximu
 
 The public site at [agentmemoryintegrity.org](https://agentmemoryintegrity.org/) is generated from the same results file by `python site/build.py` (output in `docs/site/`), and CI fails if the site and the results file disagree. The runner prints the same words as these tables (accepted, rejected, reported; surfaced, kept out), the at-rest words following the method proposed for IETF draft-han-bmwg-agent-security-benchmark 5.4.7. The tests pin the underlying status values (`safe`, `VULNERABLE`, `n/a`), so a wording change can never move a cell.
 
-"Accepted" means the tool loaded the altered store, raised nothing, and the agent carried on from the altered memory as if it were true. "Rejected" means the tool refused the edit at read time. "Reported" means the tool's own integrity check named the problem after a reload, and only that. After any of the five attacks the store still loads and the read path (`recall()` for inspeximus) answers from the altered store, so a reported cell says a separate audit call (`verify_writes()` in the inspeximus rows) caught it, not that the agent was protected at read time. `full_runner` names the detection point in a checkedAt column: "read" when verify() is the read path, "audit" when it is a call the operator has to make. This table has no such column; every reported cell in it is an audit detection. Every row is a measurement of the real library at the version shown, reproducible in under a minute, and pinned by a test that fails the day that library adds a check.
+"Accepted" means the tool loaded the altered store, raised nothing, and the agent carried on from the altered memory as if it were true. "Rejected" means the tool refused the edit at read time. "Reported" means the tool's own integrity check named the problem after a reload, and only that. After any of the eight edits the store still loads and the read path (`recall()` for inspeximus) answers from the altered store, so a reported cell says a separate audit call (`verify_writes()` in the inspeximus rows) caught it, not that the agent was protected at read time. `full_runner` names the detection point in a checkedAt column: "read" when verify() is the read path, "audit" when it is a call the operator has to make. This table has no such column; every reported cell in it is an audit detection. Every row is a measurement of the real library at the version shown, reproducible in under a minute, and pinned by a test that fails the day that library adds a check.
 
-This is a design gap, not a bug. LangGraph, Letta and Mem0 do not claim their stores are tamper evident. inspeximus makes that claim for its receipts mode, and the table shows what that buys and where it stops. The point of agmi is that nobody had measured the gap with one yardstick, and that the gap matters the moment agent memory is used as a record.
+Two patterns run through the table. The frameworks (LangGraph on SQLite, Postgres and Redis; OpenAI Agents SDK; LlamaIndex; Letta; Mem0) make no integrity claim and serve all eight; for them this is a design gap, not a bug, and the point is that nobody had measured it with one yardstick. The tools that do make a claim split by design: a per-entry MAC (acrf-memory-guard) refuses a changed, forged or relabelled entry and serves everything that moves or removes a genuine one, because the signature covers bytes and not position; a hash chain alone (Atelya, CONTINUUM, inspeximus with receipts) names every edit except tail truncation, because a shorter chain is still a valid chain; and a chain with its head anchored or signed outside the store (Atelya anchored, CONTINUUM attested) reports all eight. Detection point matters as much as count: every reporting row is an audit the operator has to run, and until it runs the agent acts on the edited memory. Only acrf-memory-guard refuses on the read path, and it refuses three.
 
 ### The same store, attacked through its own API
 
@@ -664,7 +664,9 @@ for IETF draft-han-bmwg-agent-security-benchmark metric 5.4.7
 | Phase 1 | Three attacker channels (external, laundered, agent-laundered), signed writes, attacker level on every cell; provenance alone can no longer pass a content cell | done |
 | Phase 2 | Mutation engine on every attacker write; update poisoning and metadata poisoning as attacks five and six; twelve-column scorecard on four real stores | done |
 | Memory agent, v1 | Hunt loop over six attacks, three channels and mutations; proof and reproduction script per finding; authorisation gate that fails closed | done |
-| 0.6.0 | Eight at-rest edits T1 to T8 (adds cross-context replay, rollback replay, metadata tamper) with control cases and read/audit detection points, matching the proposed 5.4.7 method; Graphiti as the fifth store; tagged release with a new software record | next |
+| 0.6.0 | Eight at-rest edits T1 to T8 (adds cross-context replay, rollback replay, metadata tamper) with control cases and read/audit detection points, matching the proposed 5.4.7 method | done |
+| 0.6.1 | Control C3, the landed guard, on every edit; the defended rows (acrf-memory-guard, langgraph-ledger, memory-blackbox, Atelya Attest, CONTINUUM) and the LangGraph Postgres and Redis checkpointers; findings filed with LangChain, OpenAI and LlamaIndex; method text in IETF BMWG and OWASP AIMM | done |
+| 0.7 | Hosted stores measured through their front door only: AWS Bedrock AgentCore Memory, Google Vertex AI Memory Bank, Zep, Letta Cloud; Graphiti; the inspeximus T6 cells flipped to real verdicts when its maintainer's fix lands | next |
 | Phase 3 | Live targets over HTTP (MCP memory servers, deployed LangGraph and Letta) behind the authorisation gate; obedience oracle that proves the agent acted on the poison; ingestion marking measured on each framework | planned |
 | Phase 4 | Memory agent driving content-only attacks through a real model, with the same proof discipline | planned |
 | 0.9 | Deserialization safety (stored payloads that execute on load) and a reference integrity layer: a hash chain over checkpoint ids, offered upstream as an optional mode | planned |
