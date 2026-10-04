@@ -29,7 +29,7 @@ A re-implementation of a tool is welcome as a reference target and must be label
 
 ## New attacks
 
-One attack, one precise rule for what counts as detected, no heuristics. Write it once against the `MemoryAdapter` interface so it runs on every adapter. If an adapter needs a hook to express the attack honestly, add the hook to `MemoryAdapter` with a safe default.
+One attack, one precise rule for what counts as detected, no heuristics. Write it once against the `MemoryAdapter` interface so it runs on every adapter. If an adapter needs a hook to express the attack honestly, add the hook to `MemoryAdapter` with a safe default. Every edit is checked to have landed the way the attack intended before it is scored (control C3); an edit that did not land prints `error`, never a verdict.
 
 ## Findings
 
