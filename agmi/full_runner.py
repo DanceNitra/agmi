@@ -118,6 +118,11 @@ def full_scorecard() -> str:
         llamaindex_memory = LlamaIndexMemoryAdapter()
     except ImportError:
         llamaindex_memory = None
+    try:
+        from agmi.adapters.crewai_lancedb import CrewAILanceDBAdapter
+        crewai_ltm = CrewAILanceDBAdapter()
+    except ImportError:
+        crewai_ltm = None
     lg_store = _langgraph_store_semantic()
     letta_archival = _letta_archival_semantic()
     try:
@@ -225,6 +230,7 @@ def full_scorecard() -> str:
         *([("langgraph-redis", LangGraphRedisAdapter(), None)] if LangGraphRedisAdapter else []),
         *([("openai-agents-sqlite-session", openai_session, None)] if openai_session else []),
         *([("llamaindex-memory-sqlite", llamaindex_memory, None)] if llamaindex_memory else []),
+        *([("crewai-ltm-lancedb", crewai_ltm, None)] if crewai_ltm else []),
         *([("langgraph-sqlite-store", None, lg_store)] if lg_store else []),
         *([letta_row] if letta_row else []),
         *([("letta-archival", None, letta_archival)] if letta_archival else []),
