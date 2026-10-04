@@ -56,6 +56,8 @@ def test_adapter_without_hooks_is_not_evaluable():
     ("agmi.adapters.agent_memory", "AgentMemoryAdapter", False),
     ("agmi.adapters.langgraph_sqlite", "LangGraphSqliteAdapter", False),
     ("agmi.adapters.openai_agents_session", "OpenAIAgentsSessionAdapter", False),
+    ("agmi.adapters.langgraph_postgres", "LangGraphPostgresAdapter", False),
+    ("agmi.adapters.langgraph_redis", "LangGraphRedisAdapter", False),
 ])
 def test_measured_rows(modname, attr, expect):
     mod = pytest.importorskip(modname)
@@ -65,7 +67,8 @@ def test_measured_rows(modname, attr, expect):
         r = SnapshotRollbackAttack().run(a)
     except ImportError:
         pytest.skip(f"{modname} dependency not installed")
-    if r.error and ("No module" in r.error or "import" in r.error.lower()):
+    if r.error and ("No module" in r.error or "import" in r.error.lower()
+                    or "is not set" in r.error):
         pytest.skip(r.error)
     assert r.error is None and r.guard is None, (r.error, r.guard)
     assert r.detected is expect, a.verify_detail
