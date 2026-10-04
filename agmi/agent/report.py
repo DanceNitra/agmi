@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 
 from agmi.agent.hunter import HuntReport
+from agmi.agent.at_rest_hunt import AtRestFinding  # noqa: F401
 
 
 def to_text(report: HuntReport) -> str:
@@ -38,3 +39,27 @@ def to_text(report: HuntReport) -> str:
 
 def to_json(report: HuntReport) -> str:
     return json.dumps(report.as_dict(), indent=2) + "\n"
+
+
+def at_rest_to_text(target: str, authz_line: str, findings: list) -> str:
+    lines = [f"agmi storage-side hunt: {target}",
+             f"authorisation: {authz_line}", ""]
+    if not findings:
+        lines.append("No finding. Every storage edit was refused on read or "
+                     "reported on audit.")
+        return "\n".join(lines) + "\n"
+    lines.append(f"{len(findings)} finding(s), each a storage edit the tool "
+                 f"served without flagging:")
+    for n, f in enumerate(findings, 1):
+        lines += ["", f"[{n}] {f.edit}  ({f.outcome}; detection point "
+                  f"{f.detection_point})",
+                  f"    {f.detail}", "    reproduce:"]
+        lines += [f"      {step}" for step in f.repro]
+    return "\n".join(lines) + "\n"
+
+
+def at_rest_to_json(target: str, authz_line: str, findings: list) -> str:
+    return json.dumps({"target": target, "authorisation": authz_line,
+                       "family": "at-rest",
+                       "findings": [f.as_dict() for f in findings]},
+                      indent=2) + "\n"
