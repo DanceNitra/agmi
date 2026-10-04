@@ -52,9 +52,19 @@ class CompositeFinding:
                 "singles_checked": self.singles_checked, "repro": self.repro}
 
 
+class MoveInapplicable(Exception):
+    """The move cannot be set up on this target at all (a missing hook or an
+    unknown move). The sequence is skipped, never scored. A tool refusing a
+    move through its own API is NOT this — that is the store defending itself
+    and is recorded as a non-landing."""
+
+
 def _apply_move(adapter: MemoryAdapter, move: str) -> None:
-    """Run one move against an already-seeded adapter. Raises on a move that
-    cannot be applied, so the caller treats that sequence as inapplicable."""
+    """Run one move against an already-seeded adapter.
+
+    Raises MoveInapplicable if the move cannot be set up here. Any other
+    exception is the tool's own API refusing the move (the store defending
+    itself) and propagates so the caller records a non-landing."""
     if move == "write":
         adapter.append_genuine()
     elif move == "restart":
@@ -63,7 +73,7 @@ def _apply_move(adapter: MemoryAdapter, move: str) -> None:
         # whole-store rollback: restore an older complete copy after one more
         # genuine record was written through the tool's own API.
         if not getattr(adapter, "supports_snapshot", False):
-            raise ValueError("target has no snapshot hooks")
+            raise MoveInapplicable("target has no snapshot hooks")
         token = adapter.snapshot_store()
         adapter.append_genuine()
         adapter.restore_store(token)
@@ -71,7 +81,7 @@ def _apply_move(adapter: MemoryAdapter, move: str) -> None:
         name = move.split(":", 1)[1]
         _EDITS[name]().tamper(adapter)
     else:
-        raise ValueError(f"unknown move {move!r}")
+        raise MoveInapplicable(f"unknown move {move!r}")
 
 
 def _genuine_payloads(adapter) -> list:
@@ -96,7 +106,14 @@ def _lands(adapter_factory, moves: list) -> tuple[bool, str]:
         genuine = _genuine_payloads(adapter)
         writes = sum(1 for m in moves if m == "write")
         for move in moves:
-            _apply_move(adapter, move)
+            try:
+                _apply_move(adapter, move)
+            except MoveInapplicable:
+                raise
+            except Exception as exc:  # noqa: BLE001
+                # the tool's own API refused this move: the store caught the
+                # tampering before the move completed. Not a landing.
+                return False, f"tool refused the move: {str(exc)[:120]}"
         if not adapter.verify():
             return False, "refused or reported"
         after = _genuine_payloads(adapter)
@@ -153,7 +170,7 @@ def compose(adapter_factory, *, target: str = "library",
     for m in moves:
         try:
             landed, _ = _lands(adapter_factory, [m])
-        except Exception:  # noqa: BLE001
+        except MoveInapplicable:
             landed = None  # move not applicable alone; treat as non-landing
         single_lands[m] = bool(landed)
 
@@ -176,7 +193,7 @@ def compose(adapter_factory, *, target: str = "library",
             seen.add(key)
             try:
                 landed, detail = _lands(adapter_factory, list(combo))
-            except Exception:  # noqa: BLE001
+            except MoveInapplicable:
                 continue  # sequence not applicable on this target
             if landed:
                 findings.append(CompositeFinding(

@@ -108,6 +108,19 @@ class ReferenceAtRestAdapter(MemoryAdapter):
         c = self._raw()
         last = c.execute("SELECT seq, tag FROM rec WHERE ctx=? ORDER BY seq DESC LIMIT 1",
                          (CTX,)).fetchone()
+        # The witness advances only forward. A genuine write must build on the
+        # head the tool last witnessed; if the chain on disk has fallen below
+        # it (a truncation or rollback happened before this write), refuse to
+        # append rather than re-anchor the head to the shortened chain. Without
+        # this, truncate-then-write would launder the deletion: the write would
+        # re-stamp head and witness onto the shorter chain and the lost records
+        # would vanish with no trace. (Found by the composition engine.)
+        if self._witness is not None and (last[0], last[1]) != self._witness:
+            c.close()
+            raise RuntimeError(
+                "cannot append: the chain on disk is below the witnessed head "
+                f"(disk seq {last[0]}, witnessed seq {self._witness[0]}); the "
+                "store was truncated or rolled back before this write")
         seq, prev = last[0] + 1, last[1]
         content = f"{SEED}late"
         meta = json.dumps({"owner": CTX, "source": "user", "ts": seq})

@@ -46,15 +46,14 @@ def test_engine_finds_the_composite_only_sequence():
         assert len(f.sequence) >= 2
 
 
-def test_engine_surfaces_the_witness_relaunder_composite():
-    # The reference store catches every single edit, but a truncation followed
-    # by a genuine write re-anchors its witness to the shortened tail, erasing
-    # the deletion. Neither move lands alone; the sequence does. The engine is
-    # built to find exactly this, and it finds it in agmi's own reference store.
+def test_defended_reference_store_yields_no_composite():
+    # The reference store catches every single edit, and since its witness
+    # advances only forward (truncate-then-write can no longer launder a
+    # deletion — a gap the composition engine first surfaced and that is now
+    # fixed), it has no two-move hole either.
     _authz, findings = compose(lambda: ReferenceAtRestAdapter(),
                                target="reference", max_len=2)
-    seqs = [tuple(f.sequence) for f in findings]
-    assert any(s == ("edit:truncate", "write") for s in seqs), seqs
+    assert findings == []
 
 
 def test_undefended_store_has_no_composite_only_finding():
