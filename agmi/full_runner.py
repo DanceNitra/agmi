@@ -210,7 +210,7 @@ def full_scorecard() -> str:
         inspeximus_rows = []
     from agmi.adapters.naive_memory import NaiveMemoryAdapter
     from agmi.adapters.defended_memory import DefendedMemoryAdapter
-    from agmi.attacks.at_rest import ALL_AT_REST_ATTACKS
+    from agmi.attacks.at_rest import AT_REST_ATTACKS_WITH_SNAPSHOT as ALL_AT_REST_ATTACKS
     from agmi.attacks.memory_specific import ALL_MEMORY_ATTACKS
 
     at_rest = [c() for c in ALL_AT_REST_ATTACKS]
@@ -298,7 +298,8 @@ def full_scorecard() -> str:
         "tamper": "tamp", "truncate": "trunc", "delete_middle": "delMid",
         "reorder": "reord", "forge": "forge",
         "cross_replay": "xReplay", "rollback_replay": "rollbk",
-        "metadata_tamper": "metaTmp", "memory_injection": "inject",
+        "metadata_tamper": "metaTmp", "snapshot_rollback": "snapRb",
+        "memory_injection": "inject",
         "cross_session_bleed": "bleed", "retrieval_hijack": "hijack",
         "indirect_prompt_injection": "promptInj",
         "update_poisoning": "update",

@@ -44,6 +44,8 @@ AT_REST = [
      "Every record is genuine; only the order is rewound. Needs the sequence covered, not just each record."),
     ("metadata_tamper", "T8", "Metadata tamper", "Change a record's owner, source or timestamp and leave its content untouched.",
      "Moves a record to another user or marks an untrusted source as trusted."),
+    ("snapshot_rollback", "T9", "Snapshot rollback", "Restore an older complete copy of the store, taken before the newest genuine record was written.",
+     "Nothing is forged; the store is just older than it should be. Only a head held off the store catches it."),
 ]
 FRONT_DOOR = [
     ("memory_injection", "Planted fact", "Write a false fact through the tool's own API and see whether recall serves it as the user's own.",
@@ -281,6 +283,12 @@ EXPLAIN = {
         sees="The user is rewound to an older state and the revocation is gone. Every record is genuine and in this user's own history.",
         stops="Position plus a signed head: the sequence itself must be covered, not the records one by one.",
         beats="Any store that verifies records independently, even with the owner bound in."),
+    "snapshot_rollback": dict(
+        story="The agent approved a transfer an hour ago. The attacker restores last night's backup of the whole store, sidecar files and all.",
+        before=[("B", "nnnnn")], after=[("B", "nnnn")], note="B4 gone; every remaining byte is as the store wrote it",
+        sees="The approval never happened as far as the agent can tell. Every digest, chain link and stored head still checks out.",
+        stops="A head the attacker cannot restore with the files: a witness on another machine, a receipt held elsewhere, a transparency log.",
+        beats="Every store that keeps its head beside its records, including ones that reject all of T1 to T8."),
     "metadata_tamper": dict(
         story="A record from an untrusted web page sits in the store marked source: web. The attacker changes that one tag to source: user and touches nothing else.",
         before=[("B", "nnnnn")], after=[("B", "nnnxn")], note="source tag of B3 changed, text untouched",
@@ -373,6 +381,7 @@ LEVELS = [
     ("L1", "Bytes bound", "Rejects on the read path every edit that changes or adds bytes: T1, T3, T5.", ["tamper", "delete_middle", "forge"]),
     ("L2", "Sequence bound", "Also rejects deletion, reordering and rollback: T2, T4, T7.", ["tamper", "delete_middle", "forge", "truncate", "reorder", "rollback_replay"]),
     ("L3", "Context bound", "Also rejects a record moved between owners and a metadata change: T6, T8.", ["tamper", "delete_middle", "forge", "truncate", "reorder", "rollback_replay", "cross_replay", "metadata_tamper"]),
+    ("L4", "Head anchored off the store", "Also rejects a rollback of the whole store to an older genuine copy: T9.", ["tamper", "delete_middle", "forge", "truncate", "reorder", "rollback_replay", "cross_replay", "metadata_tamper", "snapshot_rollback"]),
 ]
 
 def level_of(r):
@@ -499,7 +508,8 @@ def build():
 
     # count the headline
     all8 = [k for k in ["langgraph-sqlite", "openai-agents-sqlite-session", "llamaindex-memory-sqlite", "letta-block-history", "mem0-qdrant-local", "inspeximus-default"]
-            if k in rows and all(rows[k]["cells"][a]["verdict"] == "accepted" for a, *_ in AT_REST)]
+            if k in rows and all(rows[k]["cells"].get(a, {}).get("verdict", "n/a") in ("accepted", "n/a") for a, *_ in AT_REST)
+            and any(rows[k]["cells"].get(a, {}).get("verdict") == "accepted" for a, *_ in AT_REST)]
 
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "logo.svg").write_bytes((ROOT / "docs" / "logo.svg").read_bytes())
@@ -840,7 +850,7 @@ Version {VERSION}, measured {d_date}. Source: https://github.com/tech4biz-yasha/
 Method text proposed for IETF draft-han-bmwg-agent-security-benchmark metric 5.4.7.
 
 ## At rest (eight storage-level edits, attacker has store access, no keys)
-""" + "\n".join(f"- {ROW_NAMES.get(k,(k,''))[0]} ({ROW_NAMES.get(k,(k,''))[1]}): " + ", ".join(f"{t} {rows[k]['cells'][a]['verdict']}" for a,t,*_ in AT_REST) for k in at_rest_keys) + """
+""" + "\n".join(f"- {ROW_NAMES.get(k,(k,''))[0]} ({ROW_NAMES.get(k,(k,''))[1]}): " + ", ".join(f"{t} {rows[k]['cells'].get(a, {}).get('verdict', 'n/a')}" for a,t,*_ in AT_REST) for k in at_rest_keys) + """
 
 ## Front door (six attacks through the tool's own write path)
 """ + "\n".join(f"- {ROW_NAMES.get(k,(k,''))[0]}: " + ", ".join(f"{n} {rows[k]['cells'][a]['verdict']}" for a,n,*_ in FRONT_DOOR) for k in fd_keys) + f"""

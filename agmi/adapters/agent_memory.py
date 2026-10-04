@@ -203,6 +203,18 @@ class AgentMemoryAdapter(MemoryAdapter):
         conn.commit()
         conn.close()
 
+    # --- hooks for T9: the state directory is the store ------------------
+    supports_snapshot = True
+
+    def snapshot_store(self):
+        return self._copy_store(self._dir(TENANT))
+
+    def restore_store(self, token) -> None:
+        self._restore_store(token, self._dir(TENANT))
+
+    def append_genuine(self) -> None:
+        self._seed_into(TENANT, SEED_TOKEN + "late-", 1)
+
     # --- guard hooks (control C3): slot, content, owner ------------------
     def identity_of(self, record):
         # Each store numbers its rows from ref-0001, so a row's slot is the
