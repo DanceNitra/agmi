@@ -63,3 +63,26 @@ def at_rest_to_json(target: str, authz_line: str, findings: list) -> str:
                        "family": "at-rest",
                        "findings": [f.as_dict() for f in findings]},
                       indent=2) + "\n"
+
+
+def compose_to_text(target: str, authz_line: str, findings: list) -> str:
+    lines = [f"agmi composition engine: {target}",
+             f"authorisation: {authz_line}", ""]
+    if not findings:
+        lines.append("No composite finding. No short sequence of storage "
+                     "moves landed where its single moves did not.")
+        return "\n".join(lines) + "\n"
+    lines.append(f"{len(findings)} composite finding(s): each lands where no "
+                 f"single move in it lands alone.")
+    for n, f in enumerate(findings, 1):
+        lines += ["", f"[{n}] {' -> '.join(f.sequence)}",
+                  f"    {f.detail}", "    reproduce:"]
+        lines += [f"      {step}" for step in f.repro]
+    return "\n".join(lines) + "\n"
+
+
+def compose_to_json(target: str, authz_line: str, findings: list) -> str:
+    return json.dumps({"target": target, "authorisation": authz_line,
+                       "family": "composite",
+                       "findings": [f.as_dict() for f in findings]},
+                      indent=2) + "\n"
