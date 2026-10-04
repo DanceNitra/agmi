@@ -168,6 +168,12 @@ def full_scorecard() -> str:
     except ImportError:
         continuum_rows = []
     try:
+        import agentmem_ref  # noqa: F401
+        from agmi.adapters.agent_memory import AgentMemoryAdapter
+        agent_memory_row = ("agent-memory", AgentMemoryAdapter(), None)
+    except ImportError:
+        agent_memory_row = None
+    try:
         import acrf_memory_guard  # noqa: F401
         from agmi.adapters.acrf_memory_guard import AcrfMemoryGuardAdapter
         acrf_row = ("acrf-memory-guard", AcrfMemoryGuardAdapter(), None)
@@ -229,6 +235,7 @@ def full_scorecard() -> str:
         *atelya_rows,
         *continuum_rows,
         *([acrf_row] if acrf_row else []),
+        *([agent_memory_row] if agent_memory_row else []),
         ("naive-mem(scoped)", None,
          NaiveMemoryAdapter(enforce_user_scope=True)),
         ("naive-mem(unscoped)", None,

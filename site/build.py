@@ -68,6 +68,7 @@ ROW_NAMES = {
     "openai-agents-sqlite-session": ("OpenAI Agents SDK SQLiteSession", "openai-agents 0.20.0"),
     "llamaindex-memory-sqlite": ("LlamaIndex Memory, SQLAlchemy chat store", "llama-index-core 0.14.24"),
     "acrf-memory-guard": ("acrf-memory-guard, per-entry HMAC over a JSON store", "acrf-memory-guard 0.1.0"),
+    "agent-memory": ("Agent Memory reference runtime, SQLite canonical substrate, bucketed row digests, fail-closed open", "agent-memory-reference 0.2.0 (f2aef57)"),
     "langgraph-ledger": ("langgraph-ledger over SqliteSaver, hash-chained ledger, verify_thread audit", "langgraph-ledger 0.3.0"),
     "memory-blackbox-md": ("memory-blackbox memory.md watcher, agent process alive, scan audit", "memory-blackbox 0.1.1"),
     "memory-blackbox-md+restart": ("memory-blackbox memory.md watcher, agent restarted before the scan, scan audit", "memory-blackbox 0.1.1"),
@@ -97,6 +98,7 @@ ROW_REPOS = {
     "openai-agents-sqlite-session": "https://github.com/openai/openai-agents-python",
     "llamaindex-memory-sqlite": "https://github.com/run-llama/llama_index",
     "acrf-memory-guard": "https://github.com/kannasekar-alt/ACRF",
+    "agent-memory": "https://github.com/MythologIQ-Labs-LLC/agent-memory",
     "langgraph-ledger": "https://pypi.org/project/langgraph-ledger/",
     "memory-blackbox-md": "https://github.com/lavkumarv/memory-blackbox",
     "memory-blackbox-md+restart": "https://github.com/lavkumarv/memory-blackbox",
@@ -488,7 +490,7 @@ def build():
     d_date, d_platform = d["date"], d["platform"]
     at_rest_keys = [k for k in ["openfang(model,fixed)", "langgraph-sqlite", "langgraph-postgres", "langgraph-redis", "openai-agents-sqlite-session", "llamaindex-memory-sqlite", "letta-block-history",
                                 "mem0-qdrant-local", "inspeximus-default", "inspeximus-rcpt+dir",
-                                "inspeximus-rcpt+dir+home", "langgraph-ledger", "memory-blackbox-md", "memory-blackbox-md+restart", "atelya-attest-chain", "atelya-attest-chain+anchor", "continuum-events", "continuum-events+attest", "acrf-memory-guard"] if k in rows]
+                                "inspeximus-rcpt+dir+home", "langgraph-ledger", "memory-blackbox-md", "memory-blackbox-md+restart", "atelya-attest-chain", "atelya-attest-chain+anchor", "continuum-events", "continuum-events+attest", "acrf-memory-guard", "agent-memory"] if k in rows]
     fd_keys = [k for k in ["langgraph-sqlite-store", "letta-archival", "mem0-qdrant-local",
                            "inspeximus-default", "inspeximus-defended", "inspeximus-defended-key",
                            "naive-mem(scoped)", "naive-mem(unscoped)", "reference-defended(model)"] if k in rows]
@@ -769,6 +771,7 @@ Zenodo. https://doi.org/10.5281/zenodo.22860886</code></pre>
 <dt>memory-blackbox</dt><dd>A signed, hash-chained provenance ledger with a watcher for memory files such as MEMORY.md. Measured as two rows: with the agent process alive across the edit, every one of the eight edits changes the file's digest and the next scan records it as an out-of-band write; with the agent restarted between the edit and the scan, 0.1.0 served all eight because the new process baselined from the file. Reported privately and fixed the same day in 0.1.1 (<a href="https://github.com/lavkumarv/memory-blackbox/pull/31" rel="noopener">PR #31</a>): the ledger's last write is now the baseline, and both rows report all eight. The first fix in a store driven by the suite; the maintainer runs the agmi Action in CI. The ledger itself is out of the suite's scope and was not edited.</dd>
 <dt>Atelya Attest</dt><dd>A keyed hash chain over the agent's memory op-log, with an optional head checkpoint in a ledger kept under separate control. Measured as two rows. The chain alone reports a changed, deleted, swapped, forged, cross-context or rolled-back entry and a relabelled one, and serves tail truncation, since a shorter chain is still a valid chain. With the anchored head, the truncation is reported too: all eight. The README says exactly this, and the measurement agrees.</dd>
 <dt>CONTINUUM</dt><dd>A hash-chained, append-only event log an agent recovers from, with <code>verify_events()</code> naming each violation by kind and sequence, and <code>continuum attest</code> signing the chain head. Measured as two rows: the chain alone reports seven of eight and serves tail truncation; with the signed head and the check <code>attest-verify</code> performs, all eight. The second package whose README boundary and measurement agree.</dd>
+<dt>agent-memory</dt><dd>The MythologIQ Agent Memory reference runtime (Apache-2.0, installed from the repository at commit f2aef57). Every canonical SQLite row is hashed into a bucketed Merkle digest, the governance log is chained, and a sidecar beside the database binds the configuration to the last committed generation. <code>open()</code> fails closed on any mismatch, and the agent cannot read a fact without <code>open()</code>, so all eight edits are refused on the read path. Two things the eight do not measure, recorded in the pinned tests: the digests are unkeyed SHA-256, so an attacker who recomputes them is not caught by the digests alone; and a rollback of the whole state directory, database and sidecar together, is served as genuine, because the generation anchor sits beside the store it anchors. The second is the stale-snapshot case the Agent Memory maintainers' own durability work (#571) names, and the shape of the ninth edit planned for the suite.</dd>
 <dt>acrf-memory-guard</dt><dd>Per-entry HMAC checked on read (the ACRF-04 pattern). The first product on the scorecard that claims tamper evidence: refuses a changed, forged or relabelled entry on the read path, and serves a missing, swapped, cross-user or rolled-back genuine entry, since the signature covers one entry's bytes and not its slot. Its own README says rollback is out of scope; the measurement agrees and adds the other four.</dd>
 <dt>Letta</dt><dd>Block checkpoint history and archival memory.</dd>
 <dt>Mem0</dt><dd>Local Qdrant store, at rest and front door.</dd>
