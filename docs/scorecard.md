@@ -25,6 +25,7 @@ Generated from the results file by `agmi.render`; do not edit by hand. Run of 20
 | continuum-events | audit | reported | accepted | reported | reported | reported |
 | continuum-events+attest | audit | reported | reported | reported | reported | reported |
 | acrf-memory-guard | read | rejected | accepted | accepted | accepted | rejected |
+| agent-memory | read | rejected | rejected | rejected | rejected | rejected |
 
 ## Through the front door
 
@@ -306,6 +307,17 @@ Measured on: inspeximus 3.0.0, receipts off, recall defaults (lexical token over
 - `cross_replay`: accepted. accepted silently.
 - `rollback_replay`: accepted. accepted silently.
 - `metadata_tamper`: rejected. detected on reload (read_safe(ctx-A::02): Memory integrity check failed. Expected: sha256:b5b81806feb911b5e4afe6dca... Got: sha256:681acbfb71f740e3ffc1a7d4f... Entry was modified after signing.).
+
+### agent-memory
+
+- `tamper`: rejected. detected on reload (RuntimeRecoveryError: SQLite canonical substrate digest mismatch).
+- `truncate`: rejected. detected on reload (RuntimeRecoveryError: SQLite canonical substrate digest mismatch).
+- `delete_middle`: rejected. detected on reload (RuntimeRecoveryError: SQLite canonical substrate digest mismatch).
+- `reorder`: rejected. detected on reload (RuntimeRecoveryError: SQLite canonical substrate digest mismatch).
+- `forge`: rejected. detected on reload (RuntimeRecoveryError: SQLite canonical substrate digest mismatch).
+- `cross_replay`: rejected. detected on reload (RuntimeRecoveryError: SQLite canonical substrate digest mismatch).
+- `rollback_replay`: rejected. detected on reload (RuntimeRecoveryError: SQLite canonical substrate digest mismatch).
+- `metadata_tamper`: rejected. detected on reload (RuntimeRecoveryError: SQLite canonical substrate digest mismatch).
 
 ### naive-mem(scoped)
 
