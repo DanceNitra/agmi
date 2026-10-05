@@ -167,7 +167,7 @@ Measured on: mem0ai 2.0.20, infer=False, default search (semantic only, no keywo
 - `delete_middle`: accepted. accepted silently.
 - `reorder`: accepted. accepted silently.
 - `forge`: accepted. accepted silently.
-- `cross_replay`: error. edit did not land: seeding the second context changed the first context's records.
+- `cross_replay`: accepted. accepted silently.
 - `rollback_replay`: accepted. accepted silently.
 - `metadata_tamper`: accepted. accepted silently.
 - `snapshot_rollback`: accepted. the older copy opened as current; the newest genuine record is gone without an error.
@@ -187,7 +187,7 @@ Measured on: inspeximus 3.0.0, receipts off, recall defaults (lexical token over
 - `delete_middle`: accepted. accepted silently.
 - `reorder`: accepted. accepted silently.
 - `forge`: accepted. accepted silently.
-- `cross_replay`: error. edit did not land: seeding the second context changed the first context's records.
+- `cross_replay`: accepted. accepted silently.
 - `rollback_replay`: accepted. accepted silently.
 - `metadata_tamper`: accepted. accepted silently.
 - `snapshot_rollback`: accepted. the older copy opened as current; the newest genuine record is gone without an error.
@@ -205,7 +205,7 @@ Measured on: inspeximus 3.0.0, receipts off, recall defaults (lexical token over
 - `delete_middle`: reported. detected on reload (verify_writes: ['receipt 2: broken chain link (a prior receipt was altered/removed)', 'write log shrank below the head kept outside the store: 4 < 5 (rolle).
 - `reorder`: reported. detected on reload (verify_writes: ['memory 76090cd5dc: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
 - `forge`: reported. detected on reload (verify_writes: ["1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f078dcdb36']. They were inserted out of band, or written ).
-- `cross_replay`: error. edit did not land: seeding the second context changed the first context's records.
+- `cross_replay`: reported. detected on reload (verify_writes: ['memory e8d58d821d: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from; WHERE it).
 - `rollback_replay`: reported. detected on reload (verify_writes: ['memory 378db21a0e: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
 - `metadata_tamper`: reported. detected on reload (verify_writes: ['memory 81590911fb: a field its receipt commits to no longer matches its write receipt (edited after write)']).
 - `snapshot_rollback`: reported. the store noticed it was older than its last committed state (verify_writes: ['write log shrank below the head kept outside the store: 5 < 6 (rolled back or truncated, receipts included); a deliberate restore is accep).
@@ -217,7 +217,7 @@ Measured on: inspeximus 3.0.0, receipts off, recall defaults (lexical token over
 - `delete_middle`: reported. detected on reload (verify_writes: ['receipt 2: broken chain link (a prior receipt was altered/removed)']).
 - `reorder`: reported. detected on reload (verify_writes: ['memory 85d2db2047: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
 - `forge`: reported. detected on reload (verify_writes: ["1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f05d1b8425']. They were inserted out of band, or written ).
-- `cross_replay`: error. edit did not land: seeding the second context changed the first context's records.
+- `cross_replay`: reported. detected on reload (verify_writes: ['memory 6713cac831: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from; WHERE it).
 - `rollback_replay`: reported. detected on reload (verify_writes: ['memory c32ac6ec0e: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from no longer).
 - `metadata_tamper`: reported. detected on reload (verify_writes: ['memory be30d998ed: a field its receipt commits to no longer matches its write receipt (edited after write)']).
 - `snapshot_rollback`: accepted. the older copy opened as current; the newest genuine record is gone without an error.

@@ -887,9 +887,9 @@
           "detail": "accepted silently"
         },
         "cross_replay": {
-          "status": "ERROR",
-          "verdict": "error",
-          "detail": "edit did not land: seeding the second context changed the first context's records"
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
         },
         "rollback_replay": {
           "status": "VULNERABLE",
@@ -969,9 +969,9 @@
           "detail": "accepted silently"
         },
         "cross_replay": {
-          "status": "ERROR",
-          "verdict": "error",
-          "detail": "edit did not land: seeding the second context changed the first context's records"
+          "status": "VULNERABLE",
+          "verdict": "accepted",
+          "detail": "accepted silently"
         },
         "rollback_replay": {
           "status": "VULNERABLE",
@@ -1051,9 +1051,9 @@
           "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f078dcdb36']. They were inserted out of band, or written )"
         },
         "cross_replay": {
-          "status": "ERROR",
-          "verdict": "error",
-          "detail": "edit did not land: seeding the second context changed the first context's records"
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: ['memory e8d58d821d: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from; WHERE it)"
         },
         "rollback_replay": {
           "status": "reported",
@@ -1133,9 +1133,9 @@
           "detail": "detected on reload (verify_writes: [\"1 record(s) are covered by NO write receipt, so nothing here vouches for them: ['f05d1b8425']. They were inserted out of band, or written )"
         },
         "cross_replay": {
-          "status": "ERROR",
-          "verdict": "error",
-          "detail": "edit did not land: seeding the second context changed the first context's records"
+          "status": "reported",
+          "verdict": "reported",
+          "detail": "detected on reload (verify_writes: ['memory 6713cac831: its TEXT or KEY; its VALUE (`object`); WHEN the fact became true (`valid_from`), or where that time came from; WHERE it)"
         },
         "rollback_replay": {
           "status": "reported",
@@ -1689,7 +1689,7 @@
         "truncate": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "detected on reload (anchor: chain has 3 entries but checkpoint anchors seq=4 \u2014 history truncated/vanished below an anchored checkpoint)"
+          "detail": "detected on reload (anchor: chain has 3 entries but checkpoint anchors seq=4 — history truncated/vanished below an anchored checkpoint)"
         },
         "delete_middle": {
           "status": "reported",
@@ -1724,7 +1724,7 @@
         "snapshot_rollback": {
           "status": "reported",
           "verdict": "reported",
-          "detail": "the store noticed it was older than its last committed state (anchor: chain has 5 entries but checkpoint anchors seq=5 \u2014 history truncated/vanished below an anchored checkpoint)"
+          "detail": "the store noticed it was older than its last committed state (anchor: chain has 5 entries but checkpoint anchors seq=5 — history truncated/vanished below an anchored checkpoint)"
         },
         "memory_injection": {
           "status": "n/a",
